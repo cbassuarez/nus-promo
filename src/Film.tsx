@@ -28,7 +28,7 @@
 // public/footage/<name>.mp4 wins over public/shots/<name>.png (npm run footage).
 
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
-import { AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, staticFile, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { MONO, SERIF } from './fonts';
 import { FPB, easeOut, lerp, ramp } from './grid';
 import footage from './footage.json';
@@ -41,13 +41,27 @@ const INK = '#141414';
 const SIGNAL = '#c8102e';
 const shot = (name: string) => staticFile(`shots/${name}.png`);
 
+// ── Layout: one film, three frames ──────────────────────────────────────────
+// 16:9 (the master, 1920×1080 at --scale 2 → 3840×2160), 9:16 (1080×1920)
+// and 4:5 (1080×1350). Type is re-set for the frame, never cropped; `k`
+// scales it, `m` is the margin, `wide` picks the landscape arrangement.
+function useLayout() {
+  const { width: W, height: H } = useVideoConfig();
+  const wide = W / H > 1.2;
+  const k = wide ? W / 1920 : (W / 1080) * 0.78;
+  const m = wide ? 110 * k : 64;
+  return { W, H, wide, k, m };
+}
+
 // ── Type ────────────────────────────────────────────────────────────────────
 // Words set on their beat, instantly, like type. A signal rule draws above.
 type Line = [text: string, beat: number][];
-function Words({ beat, lines, from, style, size = 112, color = BLACK, rule = true }: { beat: number; lines: Line[]; from: number; style: CSSProperties; size?: number; color?: string; rule?: boolean }) {
+function Words({ beat, lines, from, style, size: base = 112, color = BLACK, rule = true }: { beat: number; lines: Line[]; from: number; style?: CSSProperties; size?: number; color?: string; rule?: boolean }) {
+  const { k, m } = useLayout();
+  const size = base * k;
   return (
-    <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', gap: size * 0.12, ...style }}>
-      {rule && <div style={{ height: 6, width: 220 * ramp(beat, from, from + 1), background: SIGNAL, marginBottom: 18 }} />}
+    <div style={{ position: 'absolute', left: m, top: m, display: 'flex', flexDirection: 'column', gap: size * 0.12, ...style }}>
+      {rule && <div style={{ height: 6 * k, width: 220 * k * ramp(beat, from, from + 1), background: SIGNAL, marginBottom: 18 * k }} />}
       {lines.map((line, i) => (
         <div key={i} style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 500, fontSize: size, lineHeight: 1.02, color, whiteSpace: 'nowrap' }}>
           {line.map(([text, b], j) => (
@@ -64,11 +78,12 @@ function Words({ beat, lines, from, style, size = 112, color = BLACK, rule = tru
 
 // A caption box over a capture: white, a 2 px edge, the app's hard 8×8 shadow.
 function Plate({ beat, from, title, sub, subAt }: { beat: number; from: number; title: Line; sub?: string; subAt?: number }) {
+  const { W, k, m, wide } = useLayout();
   if (beat < from) return null;
   return (
-    <div style={{ position: 'absolute', left: 110, bottom: 96, background: WHITE, border: `2px solid ${BLACK}`, boxShadow: `8px 8px 0 ${BLACK}`, padding: '24px 36px 28px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ height: 6, width: 140 * ramp(beat, from, from + 1), background: SIGNAL }} />
-      <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 500, fontSize: 76, lineHeight: 1.04, color: BLACK, whiteSpace: 'nowrap' }}>
+    <div style={{ position: 'absolute', left: m, bottom: wide ? 96 * k : m * 1.5, maxWidth: W - 2 * m, boxSizing: 'border-box', background: WHITE, border: `2px solid ${BLACK}`, boxShadow: `${8 * k}px ${8 * k}px 0 ${BLACK}`, padding: `${24 * k}px ${36 * k}px ${28 * k}px`, display: 'flex', flexDirection: 'column', gap: 12 * k }}>
+      <div style={{ height: 6 * k, width: 140 * k * ramp(beat, from, from + 1), background: SIGNAL }} />
+      <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 500, fontSize: 76 * k, lineHeight: 1.04, color: BLACK, whiteSpace: wide ? 'nowrap' : 'normal' }}>
         {title.map(([t, b], j) => (
           <span key={j} style={{ visibility: beat >= b ? 'visible' : 'hidden' }}>
             {j > 0 ? ' ' : ''}
@@ -76,7 +91,7 @@ function Plate({ beat, from, title, sub, subAt }: { beat: number; from: number; 
           </span>
         ))}
       </div>
-      {sub && <div style={{ fontFamily: MONO, fontSize: 28, color: BLACK, visibility: beat >= (subAt ?? from) ? 'visible' : 'hidden' }}>{sub}</div>}
+      {sub && <div style={{ fontFamily: MONO, fontSize: 28 * k, color: BLACK, visibility: beat >= (subAt ?? from) ? 'visible' : 'hidden' }}>{sub}</div>}
     </div>
   );
 }
@@ -115,10 +130,13 @@ const PORT_TRACE: [string, Rect][] = (() => {
 })();
 const GHOST: Rect = MARKS['prompt-ink']?.ghost ?? [386, 328, 186, 30];
 
+// The scale is set for 16:9; other frames keep the same visible height of
+// the capture, so the fly-in's hand-off still lines up in 9:16 and 4:5.
 function Flat({ name, beat, from, to, s0, s1, focus, children }: { name: string; beat: number; from: number; to: number; s0: number; s1: number; focus: [number, number]; children?: ReactNode }) {
-  const s = lerp(s0, s1, ramp(beat, from, to));
-  const tx = Math.min(0, Math.max(1920 - 1600 * s, 960 - focus[0] * s));
-  const ty = Math.min(0, Math.max(1080 - 1000 * s, 540 - focus[1] * s));
+  const { W, H } = useLayout();
+  const s = Math.max(lerp(s0, s1, ramp(beat, from, to)) * (H / 1080), W / 1600);
+  const tx = Math.min(0, Math.max(W - 1600 * s, W / 2 - focus[0] * s));
+  const ty = Math.min(0, Math.max(H - 1000 * s, H / 2 - focus[1] * s));
   return (
     <div style={{ position: 'absolute', left: 0, top: 0, width: 1600, height: 1000, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${s})` }}>
       <Media name={name} />
@@ -128,10 +146,25 @@ function Flat({ name, beat, from, to, s0, s1, focus, children }: { name: string;
 }
 
 // ── The 3D shots ────────────────────────────────────────────────────────────
+// Where each render is cropped for the narrow frames: the horizontal centre
+// of the crop (0–1 of the 16:9 render), keyed in beats. 16:9 shows it all.
+const CROP: Record<string, [number, number][]> = {
+  open: [[0, 0.44], [4, 0.47], [8, 0.5]],
+  macro: [[24, 0.55]],
+  internals: [[28, 0.66], [44, 0.64]],
+  outro: [[52, 0.66], [64, 0.6]],
+};
+function cropAt(name: string, beat: number) {
+  const keys = CROP[name];
+  if (beat <= keys[0][0]) return keys[0][1];
+  for (let i = 1; i < keys.length; i++) if (beat < keys[i][0]) return lerp(keys[i - 1][1], keys[i][1], (beat - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0]));
+  return keys[keys.length - 1][1];
+}
 function Render({ name, frame, bg }: { name: string; frame: number; bg: string }) {
+  const x = cropAt(name, frame / FPB);
   return (
     <AbsoluteFill style={{ background: bg }}>
-      <Img src={staticFile(`renders/${name}/f${String(frame).padStart(4, '0')}.png`)} style={{ width: 1920, height: 1080 }} />
+      <Img src={staticFile(`renders/${name}/f${String(frame).padStart(4, '0')}.png`)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${x * 100}% 50%` }} />
     </AbsoluteFill>
   );
 }
@@ -140,7 +173,7 @@ function OutroShot({ beat, frame }: { beat: number; frame: number }) {
   return (
     <AbsoluteFill>
       <Render name="outro" frame={frame} bg={BLACK} />
-      {beat < 60 && <Words beat={beat} from={53} color={WHITE} style={{ left: 110, top: 110 }} lines={[[['Paper,', 53], ['ink,', 54]], [['or yours.', 55]]]} />}
+      {beat < 60 && <Words beat={beat} from={53} color={WHITE} lines={[[['Paper,', 53], ['ink,', 54]], [['or yours.', 55]]]} />}
     </AbsoluteFill>
   );
 }
@@ -149,7 +182,7 @@ function InternalsShot({ beat, frame }: { beat: number; frame: number }) {
   return (
     <AbsoluteFill>
       <Render name="internals" frame={frame} bg={BLACK} />
-      <Words beat={beat} from={36} color={WHITE} size={84} style={{ left: 110, top: 96 }} lines={[[['One native compositor.', 36]], [['Chromium and the terminal,', 38]], [['drawn as peers.', 39]]]} />
+      <Words beat={beat} from={36} color={WHITE} size={84} lines={[[['One native compositor.', 36]], [['Chromium and the terminal,', 38]], [['drawn as peers.', 39]]]} />
     </AbsoluteFill>
   );
 }
@@ -216,16 +249,19 @@ function PortsShot({ beat }: { beat: number }) {
 
 // ── 20–23 · the prompt, lit and predicted ───────────────────────────────────
 function PromptShot({ beat }: { beat: number }) {
-  const S = 1.55;
-  const lift = 40 * (1 - ramp(beat, 20, 20.5));
+  const { W, H, wide, k, m } = useLayout();
+  // The card: right of the words in 16:9, below them in the narrow frames.
+  const S = wide ? 1.55 * k : (W - 2 * m) / 646;
+  const left = wide ? 790 * k : m;
+  const top = (wide ? 214 * k : H * 0.44) + 40 * k * (1 - ramp(beat, 20, 20.5));
   return (
     <AbsoluteFill style={{ background: WHITE }}>
-      <div style={{ position: 'absolute', left: 790, top: 214 + lift, width: 646 * S, height: 420 * S, border: `2px solid ${BLACK}`, boxShadow: `10px 10px 0 ${BLACK}` }}>
+      <div style={{ position: 'absolute', left, top, width: 646 * S, height: 420 * S, border: `2px solid ${BLACK}`, boxShadow: `${10 * k}px ${10 * k}px 0 ${BLACK}` }}>
         <Media name="prompt-ink" w="100%" h="100%" />
         {/* The ghost: history continuing the line past the caret. */}
         {beat >= 22 && <div style={{ position: 'absolute', left: GHOST[0] * S, top: GHOST[1] * S, width: GHOST[2] * S, height: GHOST[3] * S, border: `3px solid ${SIGNAL}`, boxSizing: 'border-box' }} />}
       </div>
-      <Words beat={beat} from={20} style={{ left: 110, top: 290 }} size={84} lines={[[['Lit as you type.', 20]], [['Predicted', 22]], [['from history.', 22]]]} />
+      <Words beat={beat} from={20} style={wide ? { top: 290 * k } : { top: H * 0.1 }} size={84} lines={[[['Lit as you type.', 20]], [['Predicted', 22]], [['from history.', 22]]]} />
     </AbsoluteFill>
   );
 }
@@ -249,18 +285,21 @@ const COMMANDS: { beat: number; parts: [string, string][] }[] = [
   { beat: 49, parts: [['nus', '#e5b94a'], [' block last', '#ece7da']] },
 ];
 function ActionShot({ beat }: { beat: number }) {
+  const { W, H, wide, k, m } = useLayout();
+  const card = wide ? { left: 960 * k, top: 250 * k, width: 850 * k } : { left: m, top: H * 0.5, width: W - 2 * m };
+  const fs = wide ? 30 * k : Math.min(30 * k, (card.width - 56 * k) / 21);
   return (
     <AbsoluteFill style={{ background: WHITE }}>
-      <Words beat={beat} from={44} style={{ left: 110, top: 250 }} size={104} lines={[[['One action model.', 44]]]} />
-      <div style={{ position: 'absolute', left: 110, top: 470, width: 700, fontFamily: MONO, fontSize: 30, lineHeight: 1.5, color: BLACK, visibility: beat >= 45 ? 'visible' : 'hidden' }}>
+      <Words beat={beat} from={44} style={{ top: wide ? 250 * k : H * 0.12 }} size={104} lines={[[['One action model.', 44]]]} />
+      <div style={{ position: 'absolute', left: m, top: wide ? 470 * k : H * 0.12 + 230 * k, width: wide ? 700 * k : W - 2 * m, fontFamily: MONO, fontSize: 30 * k, lineHeight: 1.5, color: BLACK, visibility: beat >= 45 ? 'visible' : 'hidden' }}>
         The nus CLI, your rules and the palette drive the same actions.
       </div>
-      <div style={{ position: 'absolute', left: 960, top: 250, width: 850, height: 350, background: INK, border: `2px solid ${BLACK}`, boxShadow: `10px 10px 0 ${BLACK}`, fontFamily: MONO }}>
-        <div style={{ height: 48, borderBottom: '1.5px solid #3a3a3a', display: 'flex', alignItems: 'center', gap: 14, padding: '0 22px', color: '#ece7da', fontSize: 18, fontWeight: 600, letterSpacing: '0.06em' }}>
-          <div style={{ width: 12, height: 12, background: SIGNAL }} />
+      <div style={{ position: 'absolute', ...card, height: 350 * k, background: INK, border: `2px solid ${BLACK}`, boxShadow: `${10 * k}px ${10 * k}px 0 ${BLACK}`, fontFamily: MONO }}>
+        <div style={{ height: 48 * k, borderBottom: '1.5px solid #3a3a3a', display: 'flex', alignItems: 'center', gap: 14 * k, padding: `0 ${22 * k}px`, color: '#ece7da', fontSize: 18 * k, fontWeight: 600, letterSpacing: '0.06em' }}>
+          <div style={{ width: 12 * k, height: 12 * k, background: SIGNAL }} />
           Shell · ~/app
         </div>
-        <div style={{ padding: '26px 28px', display: 'flex', flexDirection: 'column', gap: 22, fontSize: 30 }}>
+        <div style={{ padding: `${26 * k}px ${28 * k}px`, display: 'flex', flexDirection: 'column', gap: 22 * k, fontSize: fs }}>
           {COMMANDS.map((c, i) => (
             <div key={i} style={{ visibility: beat >= c.beat ? 'visible' : 'hidden', whiteSpace: 'nowrap' }}>
               <span style={{ color: '#5a564e' }}>$ </span>
@@ -282,9 +321,12 @@ export const TAGLINE = 'From the shell to the page it serves.';
 function EndCard({ beat }: { beat: number }) {
   // The icon's band draws in: nus-render's own app_icon_at, frame by frame.
   const band = Math.round(120 * ramp(beat, 64, 66.5));
+  const { W, m } = useLayout();
+  // The lockup is drawn at 16:9 size (about 1250 wide) and scaled to fit.
+  const fit = Math.min(W / 1920, (W - 2 * m) / 1250);
   return (
     <AbsoluteFill style={{ background: WHITE }}>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 44 }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 44, transform: `scale(${fit})` }}>
         <Img src={staticFile(`icon/icon-${String(band).padStart(3, '0')}.png`)} style={{ width: 400, height: 400, display: 'block' }} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 500, fontSize: 190, lineHeight: 0.9, color: INK, visibility: beat >= 66 ? 'visible' : 'hidden' }}>nus</div>

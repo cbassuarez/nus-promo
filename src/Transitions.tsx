@@ -10,15 +10,12 @@
 // Each takes the outgoing and incoming shots and a progress 0 → 1.
 
 import type { ReactNode } from 'react';
-import { AbsoluteFill } from 'remotion';
+import { AbsoluteFill, useVideoConfig } from 'remotion';
 import { MONO } from './fonts';
 import { easeOut } from './grid';
 
 const SIGNAL = '#c8102e';
-const COLS = 48;
-const ROWS = 27;
-const CW = 1920 / COLS;
-const CH = 1080 / ROWS;
+const CELL = 40; // px at 1920×1080; the grid keeps its cell size in every frame
 // Glyphs a terminal actually shows: prompt, paths, test output, box drawing.
 const GLYPHS = 'PS>C:\\nus$~cargo test ok 0123456789abcdef{}[]()<>=+-*/#@%&|─│┌┐└┘├┤┬┴┼█▓▒░';
 
@@ -28,6 +25,11 @@ const hash = (i: number) => {
 };
 
 export function CellResolve({ p, frame, a, b }: { p: number; frame: number; a: ReactNode; b: ReactNode }) {
+  const { width: W, height: H } = useVideoConfig();
+  const COLS = Math.round(W / CELL);
+  const ROWS = Math.round(H / CELL);
+  const CW = W / COLS;
+  const CH = H / ROWS;
   const rects: string[] = [];
   const glyphs: ReactNode[] = [];
   for (let r = 0; r < ROWS; r++) {
@@ -40,14 +42,14 @@ export function CellResolve({ p, frame, a, b }: { p: number; frame: number; a: R
         const g = GLYPHS[Math.floor(hash(i * 7 + Math.floor(frame / 2)) * GLYPHS.length)];
         const hot = hash(i * 3) > 0.86;
         glyphs.push(
-          <div key={i} style={{ position: 'absolute', left: c * CW, top: r * CH, width: CW, height: CH, background: '#000', color: hot ? SIGNAL : '#ece7da', fontFamily: MONO, fontSize: 30, lineHeight: `${CH}px`, textAlign: 'center' }}>
+          <div key={i} style={{ position: 'absolute', left: c * CW, top: r * CH, width: CW, height: CH, background: '#000', color: hot ? SIGNAL : '#ece7da', fontFamily: MONO, fontSize: CH * 0.75, lineHeight: `${CH}px`, textAlign: 'center' }}>
             {g}
           </div>,
         );
       }
     }
   }
-  const mask = `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080' fill='white'>${rects.join('')}</svg>`)}")`;
+  const mask = `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${W}' height='${H}' fill='white'>${rects.join('')}</svg>`)}")`;
   return (
     <AbsoluteFill>
       <AbsoluteFill>{a}</AbsoluteFill>
@@ -58,12 +60,13 @@ export function CellResolve({ p, frame, a, b }: { p: number; frame: number; a: R
 }
 
 export function BandWipe({ p, a, b }: { p: number; a: ReactNode; b: ReactNode }) {
+  const { width: W } = useVideoConfig();
   const band = 44;
-  const x = easeOut(p) * (1920 + band * 2) - band;
+  const x = easeOut(p) * (W + band * 2) - band;
   return (
     <AbsoluteFill>
       <AbsoluteFill>{a}</AbsoluteFill>
-      <AbsoluteFill style={{ clipPath: `inset(0 ${Math.max(0, 1920 - x + band)}px 0 0)` }}>{b}</AbsoluteFill>
+      <AbsoluteFill style={{ clipPath: `inset(0 ${Math.max(0, W - x + band)}px 0 0)` }}>{b}</AbsoluteFill>
       <div style={{ position: 'absolute', top: 0, bottom: 0, left: x - band, width: band, background: SIGNAL }} />
       {/* The split: cyan and red slivers pulled apart on the leading edge. */}
       <div style={{ position: 'absolute', top: 0, bottom: 0, left: x + 3, width: 5, background: 'rgba(0, 210, 255, 0.85)', mixBlendMode: 'screen' }} />
@@ -74,8 +77,9 @@ export function BandWipe({ p, a, b }: { p: number; a: ReactNode; b: ReactNode })
 
 export function Shutter({ p, a, b }: { p: number; a: ReactNode; b: ReactNode }) {
   // Closes over the first half, opens over the second, on the app's curve.
+  const { height: H } = useVideoConfig();
   const shut = p < 0.5 ? easeOut(p * 2) : 1 - easeOut((p - 0.5) * 2);
-  const h = 540 * shut;
+  const h = (H / 2) * shut;
   const tape = `repeating-linear-gradient(-45deg, ${SIGNAL} 0 30px, #ffffff 30px 60px)`;
   return (
     <AbsoluteFill>

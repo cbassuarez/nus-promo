@@ -14,7 +14,8 @@
     "icon": "cd tools/icon-seq && CARGO_TARGET_DIR=../../../nus/target cargo run --release -- ../../public/icon",
     "still": "remotion still Object",
     "footage": "node scripts/footage.mjs",
-    "blender": "sh blender/render.sh"
+    "blender": "sh blender/render.sh",
+    "hdri": "node scripts/hdri.mjs"
   },
   "dependencies": {
     "@remotion/cli": "4.0.526",

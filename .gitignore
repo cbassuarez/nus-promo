@@ -23,3 +23,6 @@ ableton/**/Backup/
 
 # macOS folder icons
 Icon?
+
+# third-party models (Apple AR assets, purchased GLBs) — licensed, never published
+assets/models/

@@ -1,6 +1,11 @@
 """nus — the 3D shots, built from nothing and rendered headless.
 
-  blender -b --factory-startup -P blender/nus.py -- --shot open [--frames 0:189] [--engine eevee|cycles] [--samples 64] [--scale 100]
+  blender -b --factory-startup -P blender/nus.py -- --shot open [--frames 0:189] [--engine cycles|eevee] [--samples 64] [--scale 200]
+
+Defaults render the master: 3840×2160 (scale 200 of the 1920×1080 film
+frame) in Cycles on the M4 Pro's GPU — Metal, MetalRT hardware ray tracing,
+persistent data (the scene stays resident in unified memory between
+frames), adaptive sampling, OIDN on the GPU. `--scale 50` for quick looks.
 
 Shots (film frames, 60 fps, 152 bpm — every key comes from src/score.json's grid):
   open       beats 0–8    white   the lid lifts, the screen comes on, the camera flies into it
@@ -105,12 +110,13 @@ def srgb(hex_):
     return tuple(x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c)
 
 
-def image_material(name, path, strength=1.0, gloss=0.05, start_beat=0):
+def image_material(name, path, strength=1.0, gloss=0.18, start_beat=0):
     """A screen: the picture as emission, under a thin glossy coat that
     catches the rim lights. A movie's first frame lands on `start_beat`."""
     m = principled(name, (0, 0, 0), roughness=gloss)
     nt = m.node_tree
     p = nt.nodes["Principled BSDF"]
+    p.inputs["Specular IOR Level"].default_value = 0.06  # a matte panel: rims glint, the studio doesn't
     tex = nt.nodes.new("ShaderNodeTexImage")
     if path.endswith(".mp4"):
         img = bpy.data.images.load(path)
@@ -124,7 +130,6 @@ def image_material(name, path, strength=1.0, gloss=0.05, start_beat=0):
     tex.interpolation = "Cubic"
     nt.links.new(tex.outputs["Color"], p.inputs["Emission Color"])
     p.inputs["Emission Strength"].default_value = strength
-    p.inputs["Specular IOR Level"].default_value = 0.35
     return m
 
 
@@ -337,12 +342,128 @@ def laptop():
     return {"base": base, "lid": lid, "pivot": pivot, "panel": (corners, uvs)}
 
 
+# ── Apple's MacBook Pro 14" (the AR asset from apple.com) — a stand-in for
+# blocking until the licensed model arrives; never published. Names are the
+# USDZ's own (obfuscated); the logo and the underside engravings are removed.
+APPLE = os.path.join(ROOT, "assets", "models", "macbook-pro-14-space-black.usdz")
+APPLE_LID = "RcexTyyhpuJYATQ"
+APPLE_SCREEN = "tfTbkkzhxqpKRgC"
+APPLE_GLASS = "nAIWMiVEtSYdjdZ"
+# Marks → the metal around them: the logo insert takes the lid shell's
+# aluminium (deleting it would leave its cut-out), the engravings the base's.
+APPLE_MARKS = {"xiLiwJHfkqIwaTs": "KjpcUkkMjGYeXkV", "IJeReHnhQHJFtgB": "WZqbfOdYdlPMpRs", "lzNeOaWQWAReGok": "WZqbfOdYdlPMpRs"}
+
+
+def apple_laptop():
+    before = set(bpy.data.objects)
+    bpy.ops.wm.usd_import(filepath=APPLE)
+    new = [o for o in bpy.data.objects if o not in before]
+    root = next(o for o in new if o.parent is None)
+    for mark, surround in APPLE_MARKS.items():
+        # Hide the insert and close the cut-out it sat in, so the surround
+        # reads as one unbroken surface.
+        ob = bpy.data.objects[mark]
+        ob.hide_render = True
+        shell = bpy.data.objects[surround]
+        corners = [shell.matrix_world.inverted() @ (ob.matrix_world @ Vector(c)) for c in ob.bound_box]
+        lo = Vector([min(c[i] for c in corners) for i in range(3)]) - Vector((0.002,) * 3)
+        hi = Vector([max(c[i] for c in corners) for i in range(3)]) + Vector((0.002,) * 3)
+        bm = bmesh.new()
+        bm.from_mesh(shell.data)
+        inside = lambda v: all(lo[i] <= v.co[i] <= hi[i] for i in range(3))
+        edges = [e for e in bm.edges if e.is_boundary and all(inside(v) for v in e.verts)]
+        if edges:
+            bmesh.ops.holes_fill(bm, edges=edges, sides=0)
+            bm.to_mesh(shell.data)
+        bm.free()
+    bpy.context.view_layer.update()
+    # Sit it on the floor (z = 0), like ours.
+    low = min((o.matrix_world @ Vector(c)).z for o in new if o.type == "MESH" for c in o.bound_box)
+    root.location.z -= low
+    bpy.context.view_layer.update()
+    lid_grp = bpy.data.objects[APPLE_LID]
+    lid_meshes = [o for o in lid_grp.children_recursive if o.type == "MESH"]
+    # The hinge: along x, at the lid's lowest, rearmost edge.
+    pts = [o.matrix_world @ v.co for o in lid_meshes for v in o.data.vertices]
+    zmin = min(p.z for p in pts)
+    near = [p for p in pts if p.z < zmin + 0.002]
+    hinge_y = sum(p.y for p in near) / len(near)
+    # At deck height: the top of the base along its back edge.
+    base_meshes = [o for o in new if o.type == "MESH" and o not in lid_meshes]
+    deck = max((o.matrix_world @ v.co).z for o in base_meshes for v in o.data.vertices if (o.matrix_world @ v.co).y > hinge_y - 0.02)
+    pivot = bpy.data.objects.new("Lid pivot", None)
+    bpy.context.collection.objects.link(pivot)
+    pivot.location = (0, hinge_y, deck)
+    bpy.context.view_layer.update()
+    mw = lid_grp.matrix_world.copy()
+    lid_grp.parent = pivot
+    lid_grp.matrix_world = mw
+    screen = bpy.data.objects[APPLE_SCREEN]
+    screen.hide_render = True  # our panels replace Apple's wallpaper
+    # The cover glass: keep a thin, honest reflection, not a mirror of the studio.
+    glass = bpy.data.objects[APPLE_GLASS].data.materials[0]
+    g = next(n for n in glass.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    g.inputs["Metallic"].default_value = 0.0
+    g.inputs["Roughness"].default_value = 0.06
+    g.inputs["Specular IOR Level"].default_value = 0.05
+    g.inputs["Roughness"].default_value = 0.12
+    rig = {"kind": "apple", "base": root, "pivot": pivot, "lid": lid_grp, "screen": screen}
+    # How far it opens as shipped: square to the deck plus the screen's lean back.
+    _, n = screen_world(rig)
+    rig["open_deg"] = 90 + math.degrees(math.asin(max(-1, min(1, n.z))))
+    return rig
+
+
 def panel(rig, name, mat):
+    if rig.get("kind") == "apple":
+        # A copy of Apple's screen surface, carrying our picture.
+        src = rig["screen"]
+        ob = src.copy()
+        ob.name = f"Panel {name}"
+        ob.hide_render = False
+        bpy.context.collection.objects.link(ob)
+        ob.parent = src.parent
+        ob.matrix_world = src.matrix_world.copy()
+        slot = ob.material_slots[0]
+        slot.link = "OBJECT"
+        slot.material = mat
+        return ob
     corners, uvs = rig["panel"]
     return plane(f"Panel {name}", corners, uvs, mat, rig["lid"])
 
 
 # ── World, lights, camera ──────────────────────────────────────────────────────
+HDRI = os.path.join(ROOT, "assets", "hdri")
+
+
+def hdri_world(name, strength, rotation=0.0, camera=(1, 1, 1)):
+    """A Poly Haven studio for light and reflections only: camera rays see a
+    flat colour (the film's #fff or #000), everything else sees the studio."""
+    path = next(os.path.join(HDRI, f) for f in os.listdir(HDRI) if f.startswith(name + "."))
+    w = bpy.data.worlds.new(name)
+    bpy.context.scene.world = w
+    w.use_nodes = True
+    nt = w.node_tree
+    bg = nt.nodes["Background"]
+    env = nt.nodes.new("ShaderNodeTexEnvironment")
+    env.image = bpy.data.images.load(path, check_existing=True)
+    mapping = nt.nodes.new("ShaderNodeMapping")
+    coord = nt.nodes.new("ShaderNodeTexCoord")
+    mapping.inputs["Rotation"].default_value[2] = math.radians(rotation)
+    nt.links.new(coord.outputs["Generated"], mapping.inputs["Vector"])
+    nt.links.new(mapping.outputs["Vector"], env.inputs["Vector"])
+    nt.links.new(env.outputs["Color"], bg.inputs["Color"])
+    bg.inputs["Strength"].default_value = strength
+    flat = nt.nodes.new("ShaderNodeBackground")
+    flat.inputs["Color"].default_value = (*camera, 1)
+    path_ = nt.nodes.new("ShaderNodeLightPath")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(path_.outputs["Is Camera Ray"], mix.inputs[0])
+    nt.links.new(bg.outputs[0], mix.inputs[1])
+    nt.links.new(flat.outputs[0], mix.inputs[2])
+    nt.links.new(mix.outputs[0], nt.nodes["World Output"].inputs["Surface"])
+
+
 def world(color, strength, volume=0.0):
     w = bpy.data.worlds.new("World")
     bpy.context.scene.world = w
@@ -406,11 +527,11 @@ def studio(key, rims):
     area("Rim right", (0.95, 0.05, 0.26), (0.05, 1.3), rims * 0.8, look=(0, 0, 0.04))
 
 
-def sweep(beat, y, z, length=0.9):
+def sweep(beat, y, z, length=0.9, energy=140):
     """A strip light crossing above the machine on a downbeat: the glint."""
     s = area(f"Sweep {beat}", (-1.2, y, z), (0.04, length), 0, look=(0, 0, 0))
     key(s.data, "energy", beat - 0.01, 0, "hold")
-    key(s.data, "energy", beat, 400, "hold")
+    key(s.data, "energy", beat, energy, "hold")
     key(s.data, "energy", beat + 1.2, 0, "hold")
     key(s, "location", beat, -0.9, "linear", index=0)
     key(s, "location", beat + 1.2, 0.9, "linear", index=0)
@@ -448,14 +569,31 @@ def floor():
 
 # ── Shots ──────────────────────────────────────────────────────────────────────
 def lid(rig, beat, degrees, ease="out"):
+    if rig.get("kind") == "apple":
+        # It ships open; shutting swings the top forward about +x, down onto the deck.
+        key(rig["pivot"], "rotation_euler", beat, math.radians(rig["open_deg"] * (1 - degrees / OPEN_DEG)), ease, index=0)
+        return
     key(rig["pivot"], "rotation_euler", beat, -math.radians(degrees), ease, index=0)
 
 
 OPEN_DEG = 112
+OPEN_HDRI_ROT = float(os.environ.get("NUS_HDRI_ROT", 40))
 
 
 def screen_world(rig, deg=OPEN_DEG):
     """Where the panel's centre is, and which way it faces, when the lid is open."""
+    if rig.get("kind") == "apple":
+        # The screen's plane from its shape: the axis it's thinnest along.
+        import numpy as np
+        scr = rig["screen"]
+        bpy.context.view_layer.update()
+        vs = np.array([tuple(scr.matrix_world @ v.co) for v in scr.data.vertices])
+        _, _, vt = np.linalg.svd(vs - vs.mean(axis=0))
+        n = Vector(vt[2]).normalized()
+        if n.y > 0:  # face the front (−y)
+            n = -n
+        # The centre of its extent, not of its vertices — the notch crowds the top.
+        return Vector((vs.min(axis=0) + vs.max(axis=0)) / 2), n
     a = math.radians(deg)
     corners, _ = rig["panel"]
     cy = (corners[0][1] + corners[1][1]) / 2
@@ -471,10 +609,10 @@ def screen_world(rig, deg=OPEN_DEG):
 
 
 def shot_open(rig):
-    world((1, 1, 1), 0.06)
+    hdri_world("cyclorama_hard_light", 0.35, rotation=OPEN_HDRI_ROT)
     floor()
     studio(key=160, rims=300)
-    sweep(4, -0.1, 0.55)
+    sweep(4, 0.1, 0.9, energy=18)  # a faint pass over the lid as the screen wakes
     lid(rig, 0, 0)
     lid(rig, 3, OPEN_DEG, "hold")
     off = panel(rig, "off", MAT["black"])
@@ -486,7 +624,8 @@ def shot_open(rig):
     centre, n = screen_world(rig)
     # Establishing three-quarter, drifting; then square up and fly in until
     # the panel fills the frame's width — the frame the film cuts to at 8.
-    d_fill = (PANEL_W / 2) / math.tan(math.atan(18 / 50))
+    width = rig["screen"].dimensions.x if rig.get("kind") == "apple" else PANEL_W
+    d_fill = (width / 2) / math.tan(math.atan(18 / 50))
     key(cam, "location", 0, (-0.58, -0.62, 0.34))
     key(look, "location", 0, (0, 0.0, 0.05))
     key(cam, "location", 4, (-0.46, -0.58, 0.28))
@@ -498,7 +637,7 @@ def shot_open(rig):
 
 
 def shot_macro(rig):
-    world((1, 1, 1), 0.04)
+    hdri_world("cyclorama_hard_light", 0.1, rotation=40)
     floor()
     studio(key=35, rims=150)
     sweep(24, 0.0, 0.35, 0.5)
@@ -629,10 +768,10 @@ def shot_internals(rig):
 
 
 def shot_outro(rig):
-    world((0, 0, 0), 0.0)
+    hdri_world("monochrome_studio_02", 0.25, rotation=-30, camera=(0, 0, 0))
     studio(key=25, rims=420)
     for b in (52, 56, 60):
-        sweep(b, -0.05, 0.5)
+        sweep(b, 0.35, 0.8, energy=60)  # high and behind: it rides the edges, not the glass
     if os.path.exists(os.path.join(FOOTAGE, "outro-screen.mp4")):
         # One clip from the reshoot: a theme a beat, then paper, recorded live.
         panels = [(panel(rig, "outro", image_material("outro", screen_source("outro-screen"), start_beat=52)), 52, 99)]
@@ -659,7 +798,7 @@ def shot_outro(rig):
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
-    opt = {"shot": "open", "engine": "eevee", "samples": 64, "scale": 100, "frames": None}
+    opt = {"shot": "open", "engine": "cycles", "samples": 64, "scale": 200, "frames": None, "laptop": "ours"}
     for i in range(0, len(argv), 2):
         opt[argv[i].lstrip("-")] = argv[i + 1]
     shot = opt["shot"]
@@ -679,13 +818,20 @@ def main():
     if opt["engine"] == "cycles":
         prefs = bpy.context.preferences.addons["cycles"].preferences
         prefs.compute_device_type = "METAL"
+        prefs.metalrt = "ON"  # hardware ray tracing on M3/M4
         prefs.get_devices()
         for d in prefs.devices:
             d.use = d.type == "METAL"
         sc.render.engine = "CYCLES"
         sc.cycles.device = "GPU"
         sc.cycles.samples = int(opt["samples"])
+        sc.cycles.use_adaptive_sampling = True
+        sc.cycles.adaptive_threshold = 0.01
         sc.cycles.use_denoising = True
+        sc.cycles.denoiser = "OPENIMAGEDENOISE"
+        sc.cycles.denoising_use_gpu = True
+        sc.cycles.denoising_quality = "HIGH"
+        sc.render.use_persistent_data = True  # BVH and textures stay resident between frames
     else:
         sc.render.engine = "BLENDER_EEVEE_NEXT"
         e = sc.eevee
@@ -698,7 +844,7 @@ def main():
         e.use_volumetric_shadows = True
 
     materials()
-    rig = laptop()
+    rig = apple_laptop() if opt["laptop"] == "apple" else laptop()
     {"open": shot_open, "macro": shot_macro, "internals": shot_internals, "outro": shot_outro}[shot](rig)
     finish_keys()
 
@@ -706,7 +852,7 @@ def main():
     if opt["frames"]:
         a, b = (int(x) for x in opt["frames"].split(":"))
     sc.frame_start, sc.frame_end = a, b
-    out = os.path.join(ROOT, "public", "renders", shot)
+    out = opt.get("out") or os.path.join(ROOT, "public", "renders", shot)
     os.makedirs(out, exist_ok=True)
     sc.render.filepath = os.path.join(out, "f")
     if opt.get("save"):
