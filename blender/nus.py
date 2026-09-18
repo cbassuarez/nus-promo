@@ -349,6 +349,7 @@ APPLE = os.path.join(ROOT, "assets", "models", "macbook-pro-14-space-black.usdz"
 APPLE_LID = "RcexTyyhpuJYATQ"
 APPLE_SCREEN = "tfTbkkzhxqpKRgC"
 APPLE_GLASS = "nAIWMiVEtSYdjdZ"
+APPLE_KEYBOARD = "dAVNlHAHYLbkxrB"
 # Marks → the metal around them: the logo insert takes the lid shell's
 # aluminium (deleting it would leave its cut-out), the engravings the base's.
 APPLE_MARKS = {"xiLiwJHfkqIwaTs": "KjpcUkkMjGYeXkV", "IJeReHnhQHJFtgB": "WZqbfOdYdlPMpRs", "lzNeOaWQWAReGok": "WZqbfOdYdlPMpRs"}
@@ -383,17 +384,39 @@ def apple_laptop():
     bpy.context.view_layer.update()
     lid_grp = bpy.data.objects[APPLE_LID]
     lid_meshes = [o for o in lid_grp.children_recursive if o.type == "MESH"]
-    # The hinge: along x, at the lid's lowest, rearmost edge.
-    pts = [o.matrix_world @ v.co for o in lid_meshes for v in o.data.vertices]
-    zmin = min(p.z for p in pts)
-    near = [p for p in pts if p.z < zmin + 0.002]
-    hinge_y = sum(p.y for p in near) / len(near)
-    # At deck height: the top of the base along its back edge.
     base_meshes = [o for o in new if o.type == "MESH" and o not in lid_meshes]
-    deck = max((o.matrix_world @ v.co).z for o in base_meshes for v in o.data.vertices if (o.matrix_world @ v.co).y > hinge_y - 0.02)
+    lid_pts = [o.matrix_world @ v.co for o in lid_meshes if not o.hide_render for v in o.data.vertices]
+    base_pts = [o.matrix_world @ v.co for o in base_meshes for v in o.data.vertices]
+    # The screen's facing (front and up, since the lid leans back) and the
+    # lid's own up (along the lid, away from the hinge).
+    import numpy as np
+    scr = np.array([tuple(bpy.data.objects[APPLE_SCREEN].matrix_world @ v.co) for v in bpy.data.objects[APPLE_SCREEN].data.vertices])
+    n = Vector(np.linalg.svd(scr - scr.mean(axis=0))[2][2]).normalized()
+    if n.y > 0:
+        n = -n
+    u = Vector((0, n.z, -n.y))
+    # Shut: rotate about x until the screen faces straight down.
+    theta = math.atan2(-n.y, -n.z)
+    cos_t, sin_t = math.cos(theta), math.sin(theta)
+    # The lid's far edge must land on the base's front edge; its innermost
+    # face (the glass) must rest on the deck. p' = R p + (I − R) c, linear in
+    # the axis c = (cy, cz): two conditions, two unknowns.
+    top = max(p.dot(u) for p in lid_pts)
+    A = sum((p for p in lid_pts if p.dot(u) > top - 0.0005), Vector()) / sum(1 for p in lid_pts if p.dot(u) > top - 0.0005)
+    inner = max(p.dot(n) for p in lid_pts)
+    B = next(p for p in lid_pts if p.dot(n) > inner - 1e-6)
+    front = min(p.y for p in base_pts)
+    deck = max(p.z for p in base_pts) + 0.0004
+    a_, b_ = 1 - cos_t, sin_t
+    r1 = front - (cos_t * A.y - sin_t * A.z)
+    r2 = deck - (sin_t * B.y + cos_t * B.z)
+    det = a_ * a_ + b_ * b_
+    cy = (a_ * r1 - b_ * r2) / det
+    cz = (b_ * r1 + a_ * r2) / det
     pivot = bpy.data.objects.new("Lid pivot", None)
     bpy.context.collection.objects.link(pivot)
-    pivot.location = (0, hinge_y, deck)
+    pivot.location = (0, cy, cz)
+    shut_deg = math.degrees(theta)
     bpy.context.view_layer.update()
     mw = lid_grp.matrix_world.copy()
     lid_grp.parent = pivot
@@ -407,10 +430,7 @@ def apple_laptop():
     g.inputs["Roughness"].default_value = 0.06
     g.inputs["Specular IOR Level"].default_value = 0.05
     g.inputs["Roughness"].default_value = 0.12
-    rig = {"kind": "apple", "base": root, "pivot": pivot, "lid": lid_grp, "screen": screen}
-    # How far it opens as shipped: square to the deck plus the screen's lean back.
-    _, n = screen_world(rig)
-    rig["open_deg"] = 90 + math.degrees(math.asin(max(-1, min(1, n.z))))
+    rig = {"kind": "apple", "base": root, "pivot": pivot, "lid": lid_grp, "screen": screen, "open_deg": shut_deg}
     return rig
 
 
@@ -556,6 +576,37 @@ def haze(density=0.003):
     return box
 
 
+def cyclorama(tone):
+    """A real set: floor, a curved cove, a wall. White is a matte cove the
+    studio HDRI and a soft top light roll across; black is a glossy floor
+    that holds a faint reflection of the machine, falling off to nothing."""
+    R, y_cove, reach, height, width = 0.9, 0.42, 4.0, 3.2, 8.0
+    prof = [(-reach, 0.0), (y_cove, 0.0)]
+    for i in range(1, 25):
+        a = math.radians(90 * i / 24)
+        prof.append((y_cove + R * math.sin(a), R * (1 - math.cos(a))))
+    prof.append((y_cove + R, height))
+    bm = bmesh.new()
+    rows = [[bm.verts.new((x, y, z)) for (y, z) in prof] for x in (-width / 2, width / 2)]
+    for i in range(len(prof) - 1):
+        bm.faces.new((rows[0][i], rows[1][i], rows[1][i + 1], rows[0][i + 1]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new("Cyclorama")
+    bm.to_mesh(me)
+    bm.free()
+    for p in me.polygons:
+        p.use_smooth = True
+    ob = bpy.data.objects.new("Cyclorama", me)
+    bpy.context.collection.objects.link(ob)
+    if tone == "white":
+        w = LOOK["white_cyc"]
+        mat = principled("Cyc white", (w, w, w), roughness=0.85, **{"Specular IOR Level": 0.2})
+    else:
+        mat = principled("Cyc black", (0.012, 0.012, 0.013), roughness=LOOK["black_rough"], **{"Specular IOR Level": LOOK["black_spec"]})
+    me.materials.append(mat)
+    return ob
+
+
 def floor():
     bpy.ops.mesh.primitive_plane_add(size=8, location=(0, 0, -0.00005))
     f = bpy.context.object
@@ -577,6 +628,11 @@ def lid(rig, beat, degrees, ease="out"):
 
 
 OPEN_DEG = 112
+
+# The set's look, in one place; NUS_<KEY> overrides for look development.
+# Tuned against the frame: the white cove ~241 near, ~210 far; black ~15–35.
+LOOK = {"white_hdri": 0.15, "white_key": 20, "white_rims": 160, "white_cyc": 0.86, "black_hdri": 0.12, "black_rough": 0.3, "black_spec": 0.3}
+LOOK = {k: float(os.environ.get("NUS_" + k.upper(), v)) for k, v in LOOK.items()}
 OPEN_HDRI_ROT = float(os.environ.get("NUS_HDRI_ROT", 40))
 
 
@@ -609,9 +665,9 @@ def screen_world(rig, deg=OPEN_DEG):
 
 
 def shot_open(rig):
-    hdri_world("cyclorama_hard_light", 0.35, rotation=OPEN_HDRI_ROT)
-    floor()
-    studio(key=160, rims=300)
+    hdri_world("cyclorama_hard_light", LOOK["white_hdri"], rotation=OPEN_HDRI_ROT)
+    cyclorama("white")
+    studio(key=LOOK["white_key"], rims=LOOK["white_rims"])
     sweep(4, 0.1, 0.9, energy=18)  # a faint pass over the lid as the screen wakes
     lid(rig, 0, 0)
     lid(rig, 3, OPEN_DEG, "hold")
@@ -637,23 +693,34 @@ def shot_open(rig):
 
 
 def shot_macro(rig):
-    hdri_world("cyclorama_hard_light", 0.1, rotation=40)
-    floor()
-    studio(key=35, rims=150)
+    hdri_world("cyclorama_hard_light", LOOK["white_hdri"], rotation=40)
+    cyclorama("white")
+    studio(key=12, rims=45)
     sweep(24, 0.0, 0.35, 0.5)
     lid(rig, 0, OPEN_DEG, "hold")
     panel(rig, "on", image_material("Screen palette", screen_source("palette-ink"), start_beat=24))
-    k = KEYS["K"][0]
-    ctrl = KEYS["ctrl"][0]
-    shift = KEYS["shift"][0]
-    kz = k.location.z
-    for cap, down, up in ((ctrl, 23.8, 24.9), (shift, 23.9, 24.9), (k, 24.25, 24.6)):
-        key(cap, "location", 23.5, kz, "hold", index=2)
-        key(cap, "location", down, kz, "out", index=2)
-        key(cap, "location", down + 0.08, kz - 0.0009, "hold", index=2)
-        key(cap, "location", up, kz - 0.0009, "out", index=2)
-        key(cap, "location", up + 0.12, kz, "hold", index=2)
-    kw = (k.location.x, k.location.y)
+    if rig.get("kind") == "apple":
+        # One mesh for the whole keyboard: aim where K sits — the home row,
+        # 9.3 key-widths in from the left (caps is 1.8 wide) — no press.
+        kb = bpy.data.objects[APPLE_KEYBOARD]
+        vs = [kb.matrix_world @ v.co for v in kb.data.vertices]
+        x0, x1 = min(v.x for v in vs), max(v.x for v in vs)
+        y1 = max(v.y for v in vs)
+        unit = (x1 - x0) / 15
+        kw = (x0 + 9.3 * unit, y1 - 3.5 * (max(v.y for v in vs) - min(v.y for v in vs)) / 6)
+        kz = max(v.z for v in vs)
+    else:
+        k = KEYS["K"][0]
+        ctrl = KEYS["ctrl"][0]
+        shift = KEYS["shift"][0]
+        kz = k.location.z
+        for cap, down, up in ((ctrl, 23.8, 24.9), (shift, 23.9, 24.9), (k, 24.25, 24.6)):
+            key(cap, "location", 23.5, kz, "hold", index=2)
+            key(cap, "location", down, kz, "out", index=2)
+            key(cap, "location", down + 0.08, kz - 0.0009, "hold", index=2)
+            key(cap, "location", up, kz - 0.0009, "out", index=2)
+            key(cap, "location", up + 0.12, kz, "hold", index=2)
+        kw = (k.location.x, k.location.y)
     cam, look = camera(85, 2.8)
     key(cam, "location", 24, (kw[0] - 0.09, kw[1] - 0.16, 0.085), "linear")
     key(look, "location", 24, (kw[0], kw[1], T + 0.001), "linear")
@@ -688,7 +755,7 @@ def shot_internals(rig):
     for ob in bpy.data.objects:
         if ob.type in ("MESH", "FONT", "EMPTY") and ob.name not in ():
             ob.hide_render = True
-    world((0, 0, 0), 0.0)
+    hdri_world("monochrome_studio_02", 0.12, rotation=60, camera=(0, 0, 0))
     haze()
     win = screen_source("window-ink")
     base_w, base_d = 1600 * PX, 1000 * PX
@@ -768,7 +835,8 @@ def shot_internals(rig):
 
 
 def shot_outro(rig):
-    hdri_world("monochrome_studio_02", 0.25, rotation=-30, camera=(0, 0, 0))
+    hdri_world("monochrome_studio_02", LOOK["black_hdri"], rotation=-30, camera=(0, 0, 0))
+    cyclorama("black")
     studio(key=25, rims=420)
     for b in (52, 56, 60):
         sweep(b, 0.35, 0.8, energy=60)  # high and behind: it rides the edges, not the glass
@@ -795,6 +863,20 @@ def shot_outro(rig):
     key(look, "location", 64, (-0.02, 0.0, 0.02), "hold")
 
 
+def light_product_only():
+    """Rims and sweeps light the machine, never the set: Cycles light linking,
+    the product shoot's flags and cutters. The set takes the HDRI and the key."""
+    set_names = ("Cyclorama", "Haze", "Floor")
+    product = bpy.data.collections.new("Product")
+    bpy.context.scene.collection.children.link(product)
+    for ob in bpy.data.objects:
+        if ob.type in ("MESH", "FONT") and not ob.name.startswith(set_names):
+            product.objects.link(ob)
+    for ob in bpy.data.objects:
+        if ob.type == "LIGHT" and ob.name.startswith(("Rim", "Sweep")):
+            ob.light_linking.receiver_collection = product
+
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
@@ -812,7 +894,7 @@ def main():
     sc.view_settings.look = "None"
     sc.render.image_settings.file_format = "PNG"
     sc.render.image_settings.color_mode = "RGBA"
-    sc.render.film_transparent = shot in ("open", "macro")
+    sc.render.film_transparent = False  # the set is in the frame now
     sc.render.use_motion_blur = True
     sc.render.motion_blur_shutter = 0.5
     if opt["engine"] == "cycles":
@@ -846,6 +928,7 @@ def main():
     materials()
     rig = apple_laptop() if opt["laptop"] == "apple" else laptop()
     {"open": shot_open, "macro": shot_macro, "internals": shot_internals, "outro": shot_outro}[shot](rig)
+    light_product_only()
     finish_keys()
 
     a, b = frames(shot)
