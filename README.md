@@ -12,6 +12,39 @@ npm run mux             # re-lay audio only (ableton/bounce.wav, else the previe
 npm run render:prores   # ProRes 4444 master for Resolve
 ```
 
+**The next cut is planned in [`PLAN.md`](PLAN.md)**: the copy, the beat
+table, the type and Memphis systems, the 3D shots and the Mac reshoot
+([`RESHOOT.md`](RESHOOT.md)). The table below is the cut that's built now.
+
+## Design files
+
+- `src/design/`: the system the next cut is built from.
+  - `tokens.ts`: colours, the six signals and the section map, the type scale, the grid
+  - `layout.ts`: one layout for 16:9, 9:16 and 4:5
+  - `Caption.tsx`: typed captions with nus's caret
+  - `Memphis.tsx`: the kit (squiggle, stripes, dots, solids, stickers, zigzag)
+  - `Wordmark.tsx`: the end card with the font-cycle wordmark
+  - `Mocks.tsx`: ink-theme stand-ins for UI the reshoot hasn't recorded yet, marked MOCK
+- `src/Styleframes.tsx`: the `Styleframe`, `StyleframeVertical` and
+  `StyleframeFeed` compositions, one still per section:
+  ```
+  npx remotion still Styleframe out/design/sf-agents.png --props='{"id":"agents"}'
+  ```
+- `blender/mocks.py`: 3D look-dev stills on the real sets:
+  - `memphis`: props on the cove, a hard sun, Freestyle outlines
+  - `cards`: floating UI cards
+  - `first-light`: a spot through a blind, in haze
+  - `dolly-35` / `dolly-85`: a dolly-zoom pair
+  - `glint`
+
+  It runs without factory startup, so Photographer and Light Wrangler load:
+  ```
+  blender -b -P blender/mocks.py -- --mock all
+  ```
+- `tools/contact.py`: labelled contact sheets (needs Pillow).
+
+Renders land in `out/design/` and `out/mocks/`, which are local, like all renders.
+
 ## The cut
 
 Everything is placed in beats (`src/grid.ts`); 76 beats = 19 bars = 30.000 s.
@@ -62,27 +95,34 @@ and cuelume's *arrival* once at bar 17. Nothing here writes to it.
 
 ## The laptop and the 3D shots — `blender/nus.py`
 
-Built from nothing, headless: an ink-anodised unibody with a polished
-chamfer on every edge (the line the rim light rides), a signal-red hinge,
-a square lid with no notch and no logo, keycaps with Plex Mono legends —
-nobody's product but ours. Four shots, keyed from `src/score.json`'s beat
-grid with cubic ease-out (nus's curve), rendered in Cycles on the GPU with
-depth of field and motion blur: `open`, `macro`, `internals`, `outro` →
-`public/renders/<shot>/f####.png`, numbered by film frame. White shots render
-on a transparent ground with a shadow catcher, to sit on #fff.
+Four shots, keyed from `src/score.json`'s beat grid with cubic ease-out
+(nus's curve), rendered in Cycles on the GPU (Metal, MetalRT) with depth
+of field and motion blur: `open`, `macro`, `internals`, `outro` →
+`public/renders/<shot>/f####.png`, numbered by film frame, 3840×2160 by
+default.
 
-Lighting keeps the flats dark: a high key behind, strip rims at the sides at
-edge height, a light strip sweeping the machine on downbeats. The internals
-use the compositor's own layer dumps and glyph atlas when the reshoot sends
-them (`public/internals/`), else crops of the window capture and an atlas
-drawn from Plex Mono (`tools/atlas.py`).
+- **The machine.** `--laptop apple` uses Apple's MacBook Pro 14" USDZ as a
+  stand-in until the licensed model arrives: the logo insert hidden and its
+  hole filled, the hinge axis solved so the lid shuts flush, our captures
+  on a copy of the screen surface. It lives in `assets/models/` and is
+  **never committed**. `--laptop ours` is the original handmade body.
+- **The sets** are real cycloramas (floor, cove, wall) lit by Poly Haven
+  studio HDRIs (`npm run hdri` → `assets/hdri/`). Camera rays see the flat
+  #fff or #000. Cycles light linking keeps the rims and sweeps on the
+  product. `LOOK` in `nus.py` holds the measured exposure, and every value
+  can be overridden with `NUS_<KEY>`.
+- **The internals** use the compositor's own layer dumps and glyph atlas
+  when the reshoot sends them (`public/internals/`), else crops of the
+  window capture and an atlas drawn from Plex Mono (`tools/atlas.py`).
 
 ## Assets
 
 - `public/shots/` — captures from `nus/docs/media`, 1600×1000 at 1×. Drop in
   3200×2000 captures under the same names and re-render.
 - `public/icon/` — 121 frames of `nus_render::icon::app_icon_at` (`npm run icon`).
-- `public/fonts/` — IBM Plex Mono, Newsreader Italic (OFL).
+- `public/fonts/`: IBM Plex Mono and Newsreader Italic, plus Silkscreen, Bungee and Rubik Mono One for the wordmark's font cycle (all OFL).
+- `public/icons/`: Phosphor icons (MIT) for the Memphis stickers.
+- `public/icon/ink/`: the icon frames in paper, for black grounds.
 
 ## Sync
 
@@ -91,5 +131,5 @@ and `scripts/mux.sh` lays the audio with ffmpeg. Measured: hits within ±4 ms.
 
 ## Licences
 
-Remotion: free for individuals and teams up to three. Fonts OFL; cuelume MIT;
+Remotion: free for individuals and teams up to three. Fonts OFL; Phosphor icons MIT; cuelume MIT;
 Perc Kitchen Kit samples are Ableton Core Library content, licensed with Live.

@@ -22,7 +22,11 @@ ableton/bounce.*
 ableton/**/Backup/
 
 # macOS folder icons
-Icon?
+/Icon?
 
 # third-party models (Apple AR assets, purchased GLBs) — licensed, never published
 assets/models/
+
+# look-dev renders used by styleframes (Apple model; local only)
+public/lookdev/
+__pycache__/

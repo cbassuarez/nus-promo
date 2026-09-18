@@ -878,14 +878,22 @@ def light_product_only():
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
-def main():
+def args(defaults):
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
-    opt = {"shot": "open", "engine": "cycles", "samples": 64, "scale": 200, "frames": None, "laptop": "ours"}
+    opt = dict(defaults)
     for i in range(0, len(argv), 2):
         opt[argv[i].lstrip("-")] = argv[i + 1]
-    shot = opt["shot"]
+    return opt
 
-    bpy.ops.wm.read_factory_settings(use_empty=True)
+
+def setup(opt, factory=True):
+    """An empty scene with the film's render settings. factory=False keeps
+    the user's preferences, so their add-ons (Photographer, Light Wrangler)
+    stay loaded; the film's own renders start from factory settings."""
+    if factory:
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+    else:
+        bpy.ops.wm.read_homefile(use_empty=True, load_ui=False)
     sc = bpy.context.scene
     sc.render.fps = FPS
     sc.render.resolution_x, sc.render.resolution_y = 1920, 1080
@@ -924,6 +932,13 @@ def main():
         e.volumetric_tile_size = "4"
         e.volumetric_samples = 96
         e.use_volumetric_shadows = True
+    return sc
+
+
+def main():
+    opt = args({"shot": "open", "engine": "cycles", "samples": 64, "scale": 200, "frames": None, "laptop": "ours"})
+    shot = opt["shot"]
+    sc = setup(opt)
 
     materials()
     rig = apple_laptop() if opt["laptop"] == "apple" else laptop()
@@ -943,4 +958,5 @@ def main():
     bpy.ops.render.render(animation=True)
 
 
-main()
+if __name__ == "__main__":
+    main()

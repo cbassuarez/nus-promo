@@ -1,166 +1,258 @@
-# Reshoot — a prompt for Claude Code on the Windows machine
+# Reshoot — a prompt for Claude Code on the Mac
 
 Paste everything below the line into Claude Code, run from the `nus`
-checkout on the Windows machine. It produces every piece of software
-footage the promo film needs; the Mac turns it into the final cut.
+checkout on the Mac that records. It produces every piece of software
+footage the promo film needs. It also proves the macOS build: every
+frame of the film's UI comes from nus running on macOS.
 
 ---
 
 You're producing the software footage for nus's 30-second promo film. The
-film is built on another machine (`nus-promo`: Remotion + Blender, cut to a
-152 bpm grid). Everything physical — the laptop, the lighting, the
-transitions — is done there. Your job is the one thing only this machine can
-do: **nus itself, running, captured perfectly.**
+film is built in `~/nus-promo` (Remotion + Blender, cut to a 152 bpm grid;
+read its `PLAN.md` first, sections 1 and 5). Everything physical (the
+laptop, the light, the type, the transitions) is done there. Your job is
+the one thing only nus can do: **nus itself, running on macOS, captured
+perfectly.**
 
-Read `spikes/composite/src/shot.rs` first. nus already photographs itself:
-`NUS_SHOT=<script>` runs a step list on the app's own event loop (the same
-functions chords and clicks call — no synthetic input) and writes PNGs from
-an offscreen render. You'll extend that into a recorder, then stage a demo
-machine state, then run the scripts below. Commit the extensions and the
-scripts (under `docs/promo/`); they're part of nus.
+The copy the film puts beside your footage is decided and has to be true
+of it. So if a shot can't show what its line says, stop and report back;
+don't fake it.
+
+## 0 · Build and measure
+
+1. Build the release app on this Mac and run the test suite. Note
+   anything macOS-specific that's broken; fixing parity blockers is in
+   scope, since the film claims macOS.
+2. **Latency.** The film's number card says *2.8 ms · key to screen*. That
+   figure is the `vt-render` spike on Windows (`docs/SPIKES.md` §3, method
+   in `spikes/vt-render/README.md`). Measure key → present **in the full
+   app, release build, on this Mac**, using the same method. Report the
+   median and p95, the display's refresh rate, and exactly what was
+   measured. The film uses whatever this says.
 
 ## 1 · Extend the shot system
 
+Read `spikes/composite/src/shot.rs`. `NUS_SHOT=<script>` already runs a step
+list on the app's own event loop and writes PNGs from an offscreen render.
+Extend it into a recorder. Commit the extensions and every script (under
+`docs/promo/`); they're part of nus.
+
 1. **Scale.** `NUS_SHOT_SCALE=2` renders the offscreen capture at 2× the
-   logical size, independent of the display's scale. The window's logical
-   size for every shot is **1600×1000**, so every capture is **3200×2000**.
-2. **A fixed clock.** `record <name> <seconds>` starts a recording: from
-   then on, every time source the UI animates on (easing, the caret's
-   springs, scrolling curves, bands, the palette rising, the loading bar)
-   reads a virtual clock that advances **exactly 1/60 s per frame**. Each
-   frame: advance the clock, run the step list's timed steps, update, draw
-   offscreen, write `<NUS_SHOT_OUT>/<name>/f00000.png`… Route the app's
-   `Instant::now()` reads through one clock shim to do this; don't fork
-   the animation code. Things that aren't on the clock (PTY output,
-   Chromium page loads) happen *before* `record` starts — pre-warm them.
-3. **Timed steps.** Inside a recording, `at <seconds> <step>` runs a step at
-   that clip time. Add `type <text> <chars-per-second>`, which types into
-   the focused shell (or the palette, if up) character by character on the
-   virtual clock. Existing verbs (`palette`, `board`, `theme`, `url`, …)
-   should work under `at`.
-4. **Marks.** `mark <file.json> <key>=<element> …` writes the on-screen
-   rectangles of named UI elements, in logical px of the 1600×1000 window,
-   as `{ "key": [x, y, w, h] }`. The chrome is already an AccessKit tree
-   with a node per hit target — resolve elements from there. The film
-   draws its overlays (a trace across the ports board, a box around the
-   prompt's prediction) from these, so they must be exact.
-5. **Layers.** `layers <dir>` writes, from one frame: `compositor.png` (the
-   final composite), `native-ui.png` (header + sidebar only, transparent
-   elsewhere), `terminal.png` (the terminal pane's texture, at its place in
-   the window, transparent elsewhere), `chromium.png` (the CEF texture,
-   likewise), and `marks.json` with `header`, `sidebar`, `terminal`,
-   `chromium` as `[x0, y0, x1, y1]` logical px. All at 2×.
-6. **Atlas.** `atlas <file.png>` dumps nus-render's glyph atlas texture as
-   it sits on the GPU (coverage as white on black is fine).
+   logical size, whatever the display's scale is. Every shot's logical
+   window is **1600×1000**, so every capture is **3200×2000**.
+2. **A fixed clock.** `record <name> <seconds>` starts a recording. From
+   then on, every time source the UI animates on (easing, caret springs,
+   scroll curves, bands, the palette, the profile card's rise, chips'
+   fades) reads a virtual clock that advances **exactly 1/60 s per
+   frame**. Each frame: advance the clock, run the due steps, update, draw
+   offscreen, and write `<NUS_SHOT_OUT>/<name>/f00000.png`… Route the
+   app's `Instant::now()` reads through one clock shim; don't fork the
+   animation code.
+3. **Timed steps.** Inside a recording, `at <seconds> <step>` runs a step
+   at that clip time. Add:
+   - `type <text> <chars-per-second>`, which types into whatever has
+     focus (shell, editor, palette, the prompt) one character at a time on
+     the virtual clock
+   - `key <chord>` (`cmd+s`, `enter`, `tab`, `down`, `cmd+q`…), sent
+     through the app's own key handling
+   - `await-paint`: the virtual clock **stops** (no frames are written)
+     until the focused page's CEF texture next changes, then carries on.
+     This is how a page load or an HMR reload lands on an exact frame
+     even though Chromium isn't on the clock.
+   - `await-lsp`: the same, until the pending language-server answer
+     (completion, hover, diagnostics) arrives.
+
+   Existing verbs (`palette`, `board`, `theme`, `url`, `hands`, `home`…)
+   must work under `at`.
+4. **Verbs this film needs:** `me` (the profile card, as `Act::Me`),
+   `hand <kind> <args>` (issue a hands request as `claude` would through
+   `nus mcp`, e.g. `hand read`, `hand scroll 0 600`,
+   `hand click "Issues"`, so the band, the chips and the log are the real
+   ones, driven deterministically), `editor <path>` (open a file in the
+   editor pane), `studio` (the look studio), and `fullscreen hidden` (the
+   window fullscreen, chrome hidden: the minimal mode).
+5. **Marks.** `mark <file.json> <key>=<element> …` writes the on-screen
+   rectangles of named UI elements as `{ "key": [x, y, w, h] }`, in
+   logical px of the 1600×1000 window. Resolve elements from the AccessKit
+   tree (one node per hit target). The film draws overlays from these, so
+   they must be exact.
+6. **Layers.** `layers <dir>` writes, from one frame:
+   - `compositor.png`, the final composite
+   - `native-ui.png`, the chrome only, transparent elsewhere
+   - `terminal.png`, the terminal pane's texture in place, transparent elsewhere
+   - `chromium.png`, the CEF texture in place, transparent elsewhere
+   - `marks.json`, with `header`, `sidebar`, `terminal` and `chromium` as `[x0, y0, x1, y1]`
+
+   All at 2×.
+7. **Atlas.** `atlas <file.png>` dumps nus-render's glyph atlas as it sits
+   on the GPU.
 
 Encode each recording with
 `ffmpeg -framerate 60 -i f%05d.png -c:v libx264 -preset slow -crf 10 -pix_fmt yuv420p <name>.mp4`
-and keep the PNG sequences too.
+and keep the PNG sequences, which are the masters.
 
 ## 2 · Stage the machine
 
-The footage must look like a real developer's real day, with nothing
+The footage has to look like a real developer's real day, with nothing
 personal in it.
 
-- **A clean profile** for nus (no personal history, sessions, folders).
-  Window name `acme-web`. Theme **ink**, signal **red**, default fonts,
-  cursor steady (no blink), everything else default.
-- **A project**: `~\dev\acme-web`, a small Vite app with a good-looking
-  page on `localhost:5173` (a plain, typographic landing page is ideal).
-  A second service from a second nus tab: a small API on `localhost:8787`
-  (`node server.js` is fine). A third: `python -m http.server 8765` in
-  `~\dev\acme-web\docs`. **All three started from nus shells**, so the ports
-  board lists them as **Mine** and knows their shells. Nothing else
-  listening where the board shows it (stop OneDrive's port, `jhi_service`,
-  etc., or make sure the board's view shows *Mine* only).
-- **The prompt**: PowerShell, but no username in it — the path should read
-  `~\dev\acme-web`, not `C:\Users\<you>\…`. Keep nus's shell integration
-  (OSC 133 marks) working; check that blocks, lit tokens and history
-  prediction still work after changing the prompt.
-- **History** that predicts well: run `git log --oneline -5` a few times in
-  that shell beforehand so typing `git lo` ghosts `g --oneline -5`.
-- **Sidebar**: the three service tabs, stacked sensibly, named `web`,
-  `api`, `docs`. No GitHub folder unless it shows a public demo repo.
-- **Git**: `acme-web` a real repo with a handful of plausible commits.
+- **A clean nus profile**: no personal history, sessions or folders.
+  - Window name `acme-web`.
+  - Theme **ink**, signal **red**, default fonts, a steady cursor (no blink).
+  - Profile name **seb**, face = the initial, device **this mac**.
+  - Everything else default except where a shot below says otherwise.
+- **Projects:**
+  - `~/dev/acme-web` is a small Vite app with a good-looking, plain,
+    typographic landing page on `localhost:5173`. It's a real git repo
+    with a handful of plausible commits.
+  - A second service from a second nus tab: a small API on
+    `localhost:8787` (`node server.js`).
+  - A third: `python3 -m http.server 8765` in `~/dev/acme-web/docs`.
+  - **All three are started from nus shells**, so the ports board lists
+    them as **Mine** and knows their shells. Nothing else should listen
+    where the board shows it; if something must, film *Mine* only.
+  - A small Rust crate at `~/dev/acme-web/tools/lint` with
+    rust-analyzer working in the editor pane. Seed one real type error
+    for the diagnostics shot.
+- **The prompt**: zsh, with **no username or hostname**. The path reads
+  `~/dev/acme-web`. Keep nus's shell integration (OSC 133) working, and
+  check that blocks, lit tokens and history prediction survive the
+  prompt change.
+- **The prompt's language server**: install bash-language-server, set
+  **TERMINAL · PROMPT LSP: MENU** for shot 1, and check that it actually
+  answers for zsh. If it doesn't, stop and report; the film's
+  *language-aware, even at the prompt* depends on it.
+- **History** that predicts: run the shot-1 commands a few times first.
+- **Sidebar**: tabs named `web`, `api`, `docs`, stacked sensibly.
+- **Sync**: a throwaway demo key and a local-folder carrier, so shot 9
+  joins a "second device" without touching any real account.
+- **Agents**: shot 2 uses the real hands path (`hand …` steps).
+  **ASSISTANTS · HANDS: ASK**, with no hosts pre-allowed.
 
 ## 3 · Record
 
 The film runs at **152 bpm: one beat = 0.394737 s**. Each clip's time 0
-lands on a given film beat; the times below are clip times in seconds. Leave
-**1 s of handle** at the end of every clip. Everything lands on a beat —
-the film's music hits there.
+lands on the film beat given; times below are clip seconds. Leave **1 s
+of handle** at the end of every clip. Everything lands on a beat, where
+the music hits. The styleframes in `nus-promo/out/design/` show the
+intended frames; where they're marked MOCK, your footage replaces them.
 
-### `window-ink` — time 0 = film beat 4 · record 4.2 s
-The laptop's screen comes on with this (0–1.58 s, seen on the 3D laptop),
-the camera flies into it, and it becomes the full frame at beat 8.
-- 0.000 — one shell tab, `web`, full width, idle at the prompt in
-  `~\dev\acme-web`. No split.
-- 1.776 — `type localhost:5173 18` at the prompt; the ruled hint
-  (`↵ opens in browser · Ctrl+↵ runs in shell`) shows as it's typed.
-- 2.368 — Enter: the page opens in the split beside the shell, with the
-  local-site hazard tape. (Pre-load it so it paints on this frame.)
-- hold to 4.2.
+### 1 · `shell-min`: time 0 = beat 4 · record 4.2 s
+The laptop's screen wakes on this (0–1.58 s, seen in 3D). The camera
+pushes in and it's the full frame 8–12. Film line: *language-aware, even
+at the prompt.*
+- before `record`: `fullscreen hidden`, one shell `web` in
+  `~/dev/acme-web`, a few lines of `git log --oneline -3` above the prompt
+- 1.579 (beat 8): `type` a prefix the prompt's language server completes
+  with **four or more** real rows (find one, e.g. a `git` or `cargo`
+  subcommand, and use what the server really returns), at 10 cps
+- `await-lsp`, then the menu shows under the caret
+- 2.763 (beat 11): `key down`, `key tab`, which accepts the second row
+- hold to 4.2
 
-### `ports-ink` — time 0 = film beat 12 · record 4.2 s, plus marks
-- 0.000 — the ports board is already up over the window (open it before
-  `record`), *Mine* first: 5173 vite, 8787 node, 8765 python.
-- 0.395 — the selection moves to the 5173 row.
-- hold to 4.2.
-- `mark ports-ink.marks.json port=<5173's port cell> process=<its process
-  cell> shell=<the web tab's row in the sidebar> page=<the page:
-  localhost:5173's URL field or its tab row>` — whichever of these are
-  visible with the board up. The film traces port → process → shell →
-  page across them, one per beat.
+### 2 · `agent-page`: time 0 = beat 44 · record 4.2 s, plus marks
+Film line: *agents, in plain sight.*
+- before `record`: a split, a shell running `claude` on the left, and on
+  the right `https://github.com/cbassuarez/nus` (a real page, public, and
+  ours), loaded and settled
+- 0.000: `hand read` puts up the read chip
+- 0.789 (beat 46): `hand scroll 0 600`
+- 1.579 (beat 48): `hand click "Issues"` raises the ASK band: *claude wants
+  to click Issues · ALLOW · DENY · ALLOW ON THIS HOST*
+- 2.368 (beat 50): `hands allow`, then `await-paint`; the Issues tab loads
+- hold to 4.2
+- `mark agent-page.marks.json band=<the ASK band> chips=<the chip row> log=<the page's log, if visible>`
 
-### `prompt-ink` — time 0 = film beat 20 · record 2.6 s, crop + marks
-A crop, not the whole window: the shell pane around its prompt, **646×420
-logical (1292×840)**, with a few lines of `git log` output above.
-- 0.100 — `type git lo 12`: tokens colour as they're typed.
-- by 0.789 — the prediction ghosts `g --oneline -5` after the caret.
-- hold to 2.6.
-- `mark prompt-ink.marks.json ghost=<the ghosted text>` in the crop's
-  coordinates.
+### 3 · `vite-split`: time 0 = beat 12 · record 2.6 s
+Film line: *every server. its shell. its page.*
+- before `record`: the editor pane on `src/App.tsx` (or wherever the
+  headline lives) on the left, `localhost:5173` on the right
+- 0.100: `type` a new headline over the old one (select it first), 14 cps
+- 0.789 (beat 14): `key cmd+s`
+- 1.184 (beat 15): `await-paint`; the HMR update lands on this frame
+- hold to 2.6
 
-### `palette-ink` — time 0 = film beat 24 · record 3.0 s
-Seen first on the 3D laptop's screen during a macro shot of Ctrl+Shift+K
-being pressed, then full frame.
-- 0.000 — the window as in `window-ink`'s end state (shell + page split).
-- 0.099 — the palette opens (*go* mode), empty.
-- 0.395 — `type git lo 8`: tab rows first, then actions, then search.
-- hold to 3.0.
+### 5 · `ports-ink`: time 0 = beat 16 · record 2.6 s, plus marks
+- before `record`: the ports board up over the window, *Mine* first
+  (5173 vite, 8787 node, 8765 python)
+- 0.395: the selection moves to 5173
+- hold to 2.6
+- `mark ports-ink.marks.json port=… process=… shell=<web's sidebar row> page=<localhost:5173's tab or URL field>`;
+  the film traces port → process → shell → page, one a beat
 
-### `outro-screen` — time 0 = film beat 52 · record 5.0 s
-On the 3D laptop as its lid closes. The window from `window-ink`'s end
-state; the theme changes **exactly on these frames**:
-- 0.000 catppuccin · 0.395 gruvbox · 0.789 nord · 1.184 rosé pine
-- 1.579 paper (Broadsheet), and hold to 5.0.
+### 6 · `held-a` + `held-b`: time 0 = beats 20 and 22 · record 1.8 s each
+Film line: *quit. update. crash. your shells keep running.* Two
+recordings, because the app really quits in between.
+- **held-a**: `cargo watch -x test` running in a held shell, a test pass
+  in progress; `key cmd+q` at 0.789 (the quit is the clip's last frame)
+- **held-b**: relaunch; the same shell reattached, still watching, with
+  the next test pass arriving. Also, **in another tab**, a non-held
+  command a restart *did* kill, showing the cut-off seam and its resume
+  chip. Hold to 1.8.
+
+### 7 · `studio-live`: time 0 = beat 52 · record 2.6 s
+Film line: *yours, all the way down.*
+- before `record`: the editor pane on `rules.luau` on the left, the look
+  studio on the right
+- 0.000, 0.395, 0.789, 1.184: a preset per beat (Broadsheet → Midnight →
+  Ledger → Darkroom, or whichever stock presets exist), the whole window
+  re-skinning on each
+- 1.579: `type` a one-line rule change into `rules.luau`, `key cmd+s`
+  at 1.974; the rule takes effect (a new tab's signal, say) by 2.2
+- hold to 2.6
+
+### 8 · `editor-lsp`: time 0 = beat 38 · record 3.4 s
+Film line (the second half of *built like an IDE.*)
+- before `record`: the editor pane on the seeded Rust file,
+  rust-analyzer warm, the type error already underlined
+- 0.395: the pointer moves onto the error, and the diagnostic card shows
+- 1.184: the pointer moves onto a function name; `await-lsp`; the hover
+  card shows its signature and doc
+- hold to 3.4
+
+### 4 · `home-profile`: time 0 = beat 56 · record 2.6 s
+On the 3D laptop's screen as the outro starts. Film line: *you, on this
+machine.*
+- before `record`: `home` (the prompt, centred, nothing else)
+- 0.395: `me`, and the profile card rises from the footer's avatar: face,
+  name, the DAY badge, NAME · FACE · DEVICE · SYNC · PRIVATE, MORE / CLOSE
+- hold to 2.6
+
+### 9 · `sync-join`: time 0 = beat 60 · record 2.6 s
+On the laptop as the lid closes. Film line: *no account. no server. no
+telemetry.*
+- before `record`: SETTINGS · SYNC
+- 0.000: paste the demo key; 0.395: join; the device list shows **2
+  devices** once the exchange reports (`await-paint`, or its own await if
+  it isn't CEF)
+- hold to 2.6
 
 ### Stills and layers
 - Every still in `docs/media/` again, at 2× (3200×2000), same names, in
-  the new staging, `-ink` and `-paper` — they back up any clip.
-- From the `window-ink` end state: `layers internals/` and
+  the new staging, `-ink` and `-paper`. They back up any clip.
+- From `shell-min`'s end state: `layers internals/` and
   `atlas internals/atlas.png`.
 
 ## 4 · Deliver
 
-One zip, `nus-promo-reshoot-<yyyy-mm-dd>.zip`:
+One zip, `nus-promo-reshoot-mac-<yyyy-mm-dd>.zip`:
 
 ```
-footage/window-ink.mp4
-footage/ports-ink.mp4          footage/ports-ink.marks.json
-footage/prompt-ink.mp4         footage/prompt-ink.marks.json
-footage/palette-ink.mp4
-footage/outro-screen.mp4
+footage/<name>.mp4             (the ten recordings above)
 footage/<name>/f00000.png …    (the PNG sequences, masters)
+footage/*.marks.json
 shots/*.png                    (2× stills, docs/media names)
 internals/compositor.png  native-ui.png  terminal.png  chromium.png  atlas.png  marks.json
-README.md                      (nus commit, the scripts used, anything off-spec)
+LATENCY.md                     (method, median, p95, refresh rate, build)
+README.md                      (nus commit, macOS version, the scripts, anything off-spec)
 ```
 
-Before zipping, check: every clip is 3200×2000 (prompt-ink 1292×840),
-60 fps, the right length; the theme changes and the Enter land on the
-listed frames (frame = seconds × 60); no username, email, token, private
-repo or unrelated process appears in any frame.
+Before zipping, check that:
+- every clip is 3200×2000, 60 fps, and the right length
+- every listed event lands on its frame (frame = seconds × 60)
+- no username, hostname, email, token, private repo or unrelated process
+  appears in any frame
+- the Issues click in shot 2 went only to the public repo
 
-On the Mac: unzip into `nus-promo/public/`, then
+On the recording Mac: unzip into `nus-promo/public/`, then run
 `npm run footage && sh blender/render.sh && npm run render`.
