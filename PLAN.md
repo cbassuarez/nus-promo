@@ -144,6 +144,46 @@ Found in the probe (2026-09-18, Blender 4.5.3):
   the per-light `lw_*` properties can be set from a script. Until the rig
   files exist, the gobo is geometry: a blind in front of a spot, in haze.
 
+### Stage 2: the look (decided, 2026-09-18)
+
+`NUS_STAGE=2` is the default; `NUS_STAGE=1` renders the first look for
+comparison (`out/mocks/contact-stage.png`).
+
+- **View transform: Khronos PBR Neutral.** It keeps product colour true
+  and rolls highlights off; scene 1.0 → 239, 2.0 → 250, 20 → 255. The
+  film's flat ground is laid under the render in the compositor at 20
+  (white) or 0 (black), after the bloom, so it never blooms.
+- **Screens are display-true.** A panel's emission runs through the
+  inverse of the view transform (toe and shoulder), so the capture comes
+  out as its own sRGB pixels. Checked on the open shot's hand-off frame:
+  sidebar (20, 20, 20) against the capture's (20, 20, 20). The open shot
+  fades the glass coat and eases the brightness back to 1.0 over beats
+  5–7.6, so the cut to the flat capture at 8 doesn't jump.
+- **Glass:** the screen is emission under a clear coat at IOR 1.5
+  (`screen_coat` 0.03); the bezel glass matches, so they read as one sheet.
+- **Metal:** Apple's AR roughness map (~0.55, a 512 px JPEG) is scaled
+  ×0.55 to anodised (~0.3), plus a procedural bead-blast bump
+  (`metal_rough`, `bead`).
+- **Light:** feathered mesh softboxes (top, two edge strips, a bar for the
+  glass, a back rim) and black flags. The camera sees none of them;
+  they're linked to the product only. The set gets its own light (white
+  cyc only), and Memphis props take neither: only the sun and the fill,
+  so the signals keep their colour.
+- **Sets:** the white cyc is satin and runs to #fff; the black one is
+  acrylic (roughness 0.14) with a real reflection.
+- **Tuning:** every value is `NUS_<KEY>`: `exposure`, `screen_nits`,
+  `screen_coat`, `set_light`, `softbox`, `bloom`, `dispersion`,
+  `metal_rough`, `bead`, or `NUS_VIEW` for another transform.
+
+### Add-ons (decided)
+
+- **Photographer** (the installed, patched repack) is optional. Its
+  values are mirrored onto the camera, so renders don't depend on it.
+- **Light Wrangler** (the official trial) is for blocking rigs in the GUI.
+- **Cinepack** is a library of pre-animated camera moves. It isn't a
+  look tool. Not buying: every move in this film is beat-locked and hands
+  off to Remotion on exact frames, so presets would all need retiming.
+
 ## 5 · The Mac reshoot (UI shots)
 
 Recorded on the Mac with nus's own `NUS_SHOT` recorder — this also proves
@@ -212,6 +252,7 @@ npm run render                                   # footage → score → picture
 - [x] `RESHOOT.md` for the Mac, 9 UI shots
 - [x] Canvas: Production page
 - [ ] Reshoot on the Mac → `public/footage/`, `public/shots/`, `public/internals/`
+- [x] Stage 2 look: view transform, display-true glass screens, anodised metal, softboxes/flags, lens pass
 - [ ] Rig files: block Light Wrangler/Photographer rigs, `nus.py` appends `Rig`
 - [ ] Blender `RANGES` to the new cut; props and dolly zoom into `shot_open`
 - [ ] `Film.tsx` rebuilt from the styleframe components on the new beat table

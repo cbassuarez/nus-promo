@@ -21,6 +21,7 @@ import nus  # noqa: E402
 from nus import LOOK, MAT, OPEN_DEG, aim, area, camera, cyclorama, haze, hdri_world, image_material, panel, principled, screen_source, screen_world, srgb, studio  # noqa: E402
 
 OUT = os.path.join(nus.ROOT, "out", "mocks")
+BASE_LOOK = dict(LOOK)
 SIGNAL = {"red": "#c8102e", "blue": "#1f5fbf", "gold": "#d9a400", "green": "#2e7d32", "violet": "#6b3fa0", "teal": "#1a7f8a"}
 INK = "#141414"
 PAPER = "#f4f1ea"
@@ -262,8 +263,9 @@ def mock_memphis(rig):
     sun for the kit's hard shadows, the ink outline on the objects only."""
     hdri_world("cyclorama_hard_light", LOOK["white_hdri"] * 0.45, rotation=40)
     cyclorama("white")
+    LOOK["set_light"] = float(os.environ.get("NUS_SET_LIGHT", 0.2))  # a dimmer white-maker: the sun's shadows read
     studio(key=0, rims=LOOK["white_rims"] * 0.25)
-    sun("Hard sun", (-1.6, 0.15, 1.25), float(os.environ.get("NUS_SUN", 4.5)), angle=0.4)  # from the side, clear of the cove wall: shadows rake right, the kit's 8×8
+    sun("Hard sun", (-1.6, 0.15, 1.25), float(os.environ.get("NUS_SUN", 2.6)), angle=0.4)  # from the side, clear of the cove wall: shadows rake right, the kit's 8×8
     open_screen(rig)
     squiggle("Squiggle", SIGNAL["violet"], (-0.36, 0.02), length=0.3, amp=0.03, radius=0.009, rot=0.9)
     solid("Arch", "arch", SIGNAL["gold"], (0.33, 0.1), 0.16, rot=-0.5)
@@ -301,7 +303,7 @@ def mock_first_light(rig):
     cyclorama("black")
     set_lid(rig, 0.4)
     src = (1.1, 0.9, 1.3)
-    spot("Gobo", src, (0.0, 0.0, 0.0), 900, size_deg=22, blend=0.05, radius=0.004)
+    spot("Gobo", src, (0.0, 0.0, 0.0), 2400, size_deg=22, blend=0.05, radius=0.004)
     blind((0.62, 0.5, 0.78), (0.0, 0.0, 0.0), slats=8, w=0.6, h=0.45, gap=0.45)
     box = haze(0.05)
     box.scale = (1.6, 1.4, 0.9)
@@ -319,6 +321,7 @@ def dolly(rig, focal):
     cyclorama("white")
     studio(key=LOOK["white_key"], rims=LOOK["white_rims"])
     open_screen(rig)
+    sun("Hard sun", (-1.6, 0.15, 1.25), 2.0, angle=0.6)
     solid("Sphere", "sphere", SIGNAL["blue"], (0.36, 0.3), 0.12)
     solid("Arch", "arch", SIGNAL["gold"], (-0.42, 0.32), 0.2, rot=0.3)
     solid("Hoop", "hoop", SIGNAL["red"], (0.12, 0.36), 0.42, rot=-0.45)  # right behind the lid: it swells at 85, shrinks at 35
@@ -345,7 +348,38 @@ def mock_glint(rig):
     return cam, dict(focal=50, aperture=4.0)
 
 
+def hero(rig, tone):
+    """The machine alone, open, three-quarter: the look-dev reference for
+    metal, glass and the set."""
+    if tone == "white":
+        hdri_world("cyclorama_hard_light", LOOK["white_hdri"], rotation=40)
+    else:
+        hdri_world("monochrome_studio_02", LOOK["black_hdri"], rotation=-30, camera=(0, 0, 0))
+    cyclorama(tone)
+    studio(key=LOOK["white_key"], rims=LOOK["white_rims"])
+    open_screen(rig)
+    cam, look = camera(50, 5.6)
+    place_cam(cam, look, (-0.62, -0.72, 0.36), (0.0, 0.0, 0.07))
+    return cam, dict(focal=50, aperture=5.6)
+
+
+def mock_screen(rig):
+    """Macro on the display's corner: the glass, the bezel, the aluminium edge."""
+    hdri_world("cyclorama_hard_light", LOOK["white_hdri"], rotation=40)
+    cyclorama("white")
+    studio(key=LOOK["white_key"], rims=LOOK["white_rims"])
+    open_screen(rig)
+    centre, n = screen_world(rig)
+    corner = centre + Vector((-0.12, 0, 0.07))
+    cam, look = camera(85, 5.6)
+    place_cam(cam, look, tuple(corner + Vector((-0.12, -0.3, 0.04))), tuple(corner))
+    return cam, dict(focal=85, aperture=5.6)
+
+
 MOCKS = {
+    "hero-white": lambda rig: hero(rig, "white"),
+    "hero-black": lambda rig: hero(rig, "black"),
+    "screen": mock_screen,
     "memphis": mock_memphis,
     "cards": mock_cards,
     "first-light": mock_first_light,
@@ -361,6 +395,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     for name in names:
         sc = nus.setup(opt, factory=False)
+        LOOK.update(BASE_LOOK)
         sc.render.use_motion_blur = False
         nus.MAT.clear()
         nus.materials()
@@ -368,8 +403,10 @@ def main():
         cam, lens = MOCKS[name](rig)
         how = photographer(cam, **lens)
         nus.light_product_only()
+        if nus.STAGE >= 2:
+            nus.lens()
         sc.frame_set(1)
-        sc.render.filepath = os.path.join(OUT, f"{name}.png")
+        sc.render.filepath = os.path.join(OUT, f"{name}{opt.get('suffix', '')}.png")
         bpy.ops.render.render(write_still=True)
         print(f"MOCK {name}: {how} -> {sc.render.filepath}", flush=True)
 

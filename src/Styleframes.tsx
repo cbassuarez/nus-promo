@@ -205,7 +205,7 @@ function IDE() {
   const b = SIGNAL.blue;
   return (
     <Ground section="ide">
-      <Img src={staticFile('renders/internals/f0960.png')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '66% 50%' }} />
+      <Img src={staticFile('lookdev/internals-0960.png')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '66% 50%' }} />
       {captionFor('ide', { kicker: 'Architecture · 04', headline: 'built like an *IDE*.', sub: 'one native compositor. real chromium, drawn beside your shells.' }, wide, W, m, col)}
       <Pop beat={BEAT} at={0} x={m} y={(wide ? H * 0.12 : H * 0.08) + (wide ? 390 : 480) * k}>
         <Squiggle width={330 * k} height={36 * k} colour={b} weight={13 * k} />

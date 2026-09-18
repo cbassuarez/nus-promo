@@ -111,6 +111,15 @@ default.
   #fff or #000. Cycles light linking keeps the rims and sweeps on the
   product. `LOOK` in `nus.py` holds the measured exposure, and every value
   can be overridden with `NUS_<KEY>`.
+- **The look** is stage 2 (PLAN.md §4):
+  - Khronos PBR Neutral
+  - display-true glass screens
+  - anodised metal
+  - feathered softboxes and black flags for the product only
+  - a set light for the cyc only
+  - a lens pass
+
+  `NUS_STAGE=1` renders the first look for comparison.
 - **The internals** use the compositor's own layer dumps and glyph atlas
   when the reshoot sends them (`public/internals/`), else crops of the
   window capture and an atlas drawn from Plex Mono (`tools/atlas.py`).

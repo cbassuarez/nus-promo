@@ -110,7 +110,7 @@ def srgb(hex_):
     return tuple(x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c)
 
 
-def image_material(name, path, strength=1.0, gloss=0.18, start_beat=0):
+def image_material(name, path, strength=1.0, gloss=0.18, start_beat=0, glass=True):
     """A screen: the picture as emission, under a thin glossy coat that
     catches the rim lights. A movie's first frame lands on `start_beat`."""
     m = principled(name, (0, 0, 0), roughness=gloss)
@@ -128,9 +128,66 @@ def image_material(name, path, strength=1.0, gloss=0.18, start_beat=0):
         img = bpy.data.images.load(path, check_existing=True)
     tex.image = img
     tex.interpolation = "Cubic"
-    nt.links.new(tex.outputs["Color"], p.inputs["Emission Color"])
+    picture = tex.outputs["Color"]
+    if VIEW == "Khronos PBR Neutral":
+        picture = display_inverse(nt, picture)
+    nt.links.new(picture, p.inputs["Emission Color"])
     p.inputs["Emission Strength"].default_value = strength
+    if STAGE >= 2 and glass:
+        # A display is light under glass: no sheen of its own, a clear coat
+        # at glass's IOR on top, so it reflects the studio the way a real
+        # screen does (4 % head-on, a mirror at grazing angles).
+        p.inputs["Specular IOR Level"].default_value = 0.0
+        p.inputs["Coat Weight"].default_value = 1.0
+        p.inputs["Coat Roughness"].default_value = LOOK["screen_coat"]
+        p.inputs["Coat IOR"].default_value = 1.5
+        p.inputs["Emission Strength"].default_value = strength * LOOK["screen_nits"]
     return m
+
+
+def display_inverse(nt, color_socket):
+    """Undo Khronos PBR Neutral for a picture that must come out as its own
+    sRGB pixels: a screen is display-referred, the scene around it isn't.
+    The view transform's forward path is offset (x < 0.08: x → 6.25x², else
+    x − 0.04), then a shoulder on the peak channel above 0.76; this runs it
+    backwards — shoulder first, then the toe. (Its small highlight
+    desaturation isn't inverted; UI whites sit barely into the shoulder.)"""
+    def math(op, a, b=None, clamp=False):
+        n = nt.nodes.new("ShaderNodeMath")
+        n.operation = op
+        n.use_clamp = clamp
+        for i, v in enumerate((a, b)):
+            if v is None:
+                continue
+            if isinstance(v, (int, float)):
+                n.inputs[i].default_value = v
+            else:
+                nt.links.new(v, n.inputs[i])
+        return n.outputs[0]
+
+    sep = nt.nodes.new("ShaderNodeSeparateColor")
+    nt.links.new(color_socket, sep.inputs[0])
+    r, g, b = sep.outputs[0], sep.outputs[1], sep.outputs[2]
+    # Shoulder: m' = 1 − d²/(m + d − s) forward, so m = d²/(1 − m') − d + s.
+    s0, d = 0.76, 0.24
+    m = math("MAXIMUM", math("MAXIMUM", r, g), b)
+    mc = math("MINIMUM", m, 0.995)
+    peak = math("ADD", math("SUBTRACT", math("DIVIDE", d * d, math("SUBTRACT", 1.0, mc)), d), s0)
+    over = math("GREATER_THAN", m, s0)
+    ratio = math("DIVIDE", peak, math("MAXIMUM", m, 1e-6))
+    scale = math("ADD", 1.0, math("MULTIPLY", over, math("SUBTRACT", ratio, 1.0)))
+    out = []
+    for c in (r, g, b):
+        y = math("MULTIPLY", c, scale)
+        # Toe: y = 6.25x² below 0.04 (x < 0.08), else y = x − 0.04.
+        low = math("LESS_THAN", y, 0.04)
+        a_ = math("SQRT", math("MULTIPLY", y, 0.16, clamp=False))
+        b_ = math("ADD", y, 0.04)
+        out.append(math("ADD", math("MULTIPLY", low, a_), math("MULTIPLY", math("SUBTRACT", 1.0, low), b_)))
+    comb = nt.nodes.new("ShaderNodeCombineColor")
+    for i, o in enumerate(out):
+        nt.links.new(o, comb.inputs[i])
+    return comb.outputs[0]
 
 
 def screen_source(name):
@@ -430,8 +487,55 @@ def apple_laptop():
     g.inputs["Roughness"].default_value = 0.06
     g.inputs["Specular IOR Level"].default_value = 0.05
     g.inputs["Roughness"].default_value = 0.12
+    if STAGE >= 2:
+        g.inputs["Roughness"].default_value = LOOK["screen_coat"]
+        g.inputs["Specular IOR Level"].default_value = 0.5  # IOR 1.5: the same sheet as the screen's coat
+        aluminium([o for o in new if o.type == "MESH"])
     rig = {"kind": "apple", "base": root, "pivot": pivot, "lid": lid_grp, "screen": screen, "open_deg": shut_deg}
     return rig
+
+
+def aluminium(meshes):
+    """Apple's AR model bakes the aluminium's roughness into a 512 px JPEG at
+    ~0.55, tuned for Quick Look on a phone; under a softbox that smears every
+    reflection flat. Keep its variation, scale it to bead-blasted anodised
+    aluminium (~0.3), and add the blast itself — a fine bump a 512 px normal
+    map can't carry at 4K."""
+    seen = set()
+    for ob in meshes:
+        for slot in ob.material_slots:
+            m = slot.material
+            if not m or m.name in seen or not m.use_nodes:
+                continue
+            seen.add(m.name)
+            nt = m.node_tree
+            p = next((n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"), None)
+            if not p or p.inputs["Metallic"].is_linked or p.inputs["Metallic"].default_value < 0.99:
+                continue
+            r = p.inputs["Roughness"]
+            if r.is_linked:
+                src = r.links[0].from_socket
+                mul = nt.nodes.new("ShaderNodeMath")
+                mul.operation = "MULTIPLY"
+                mul.inputs[1].default_value = LOOK["metal_rough"]
+                nt.links.new(src, mul.inputs[0])
+                nt.links.new(mul.outputs[0], r)
+            else:
+                r.default_value = min(r.default_value, 0.3) if r.default_value > 0.05 else r.default_value
+            if LOOK["bead"] > 0:
+                coord = nt.nodes.new("ShaderNodeTexCoord")
+                noise = nt.nodes.new("ShaderNodeTexNoise")
+                noise.inputs["Scale"].default_value = 9000.0  # object space, metres: grains of ~0.1 mm
+                noise.inputs["Detail"].default_value = 2.0
+                nt.links.new(coord.outputs["Object"], noise.inputs["Vector"])
+                bump = nt.nodes.new("ShaderNodeBump")
+                bump.inputs["Strength"].default_value = 0.035 * LOOK["bead"]
+                bump.inputs["Distance"].default_value = 0.00002
+                nt.links.new(noise.outputs["Fac"], bump.inputs["Height"])
+                n = p.inputs["Normal"]
+                if n.is_linked:
+                    nt.links.new(n.links[0].from_socket, bump.inputs["Normal"])
+                nt.links.new(bump.outputs["Normal"], n)
 
 
 def panel(rig, name, mat):
@@ -537,7 +641,12 @@ def camera(lens=50, fstop=5.6):
     return cam, target
 
 
+TONE = "white"
+
+
 def studio(key, rims):
+    if STAGE >= 2:
+        return stage(TONE)
     """Product lighting that keeps the flats dark: a high key behind and
     above (outside the deck's mirror path from a front camera), strip rims
     at the sides at edge height to ride the chamfers, black everywhere else."""
@@ -598,7 +707,15 @@ def cyclorama(tone):
         p.use_smooth = True
     ob = bpy.data.objects.new("Cyclorama", me)
     bpy.context.collection.objects.link(ob)
-    if tone == "white":
+    global TONE
+    TONE = tone
+    if STAGE >= 2 and tone == "white":
+        # Satin: a soft sheen that carries a faint reflection of the machine.
+        mat = principled("Cyc white", (0.9, 0.9, 0.9), roughness=0.42, **{"Specular IOR Level": 0.35})
+    elif STAGE >= 2:
+        # Black acrylic: a clear reflection that falls off with the light.
+        mat = principled("Cyc black", (0.007, 0.007, 0.0075), roughness=0.14, **{"Specular IOR Level": 0.5})
+    elif tone == "white":
         w = LOOK["white_cyc"]
         mat = principled("Cyc white", (w, w, w), roughness=0.85, **{"Specular IOR Level": 0.2})
     else:
@@ -631,8 +748,19 @@ OPEN_DEG = 112
 
 # The set's look, in one place; NUS_<KEY> overrides for look development.
 # Tuned against the frame: the white cove ~241 near, ~210 far; black ~15–35.
-LOOK = {"white_hdri": 0.15, "white_key": 20, "white_rims": 160, "white_cyc": 0.86, "black_hdri": 0.12, "black_rough": 0.3, "black_spec": 0.3}
+LOOK = {"white_hdri": 0.15, "white_key": 20, "white_rims": 160, "white_cyc": 0.86, "black_hdri": 0.12, "black_rough": 0.3, "black_spec": 0.3,
+        # Stage 2 (NUS_STAGE=2, the default): the product-photography stage.
+        "exposure": 0.0, "screen_nits": 1.5, "screen_coat": 0.03, "set_light": 1.0, "softbox": 1.0, "bloom": 1.0, "dispersion": 0.004,
+        "metal_rough": 0.55, "bead": 1.0}
 LOOK = {k: float(os.environ.get("NUS_" + k.upper(), v)) for k, v in LOOK.items()}
+# Stage 1 is the first look (Standard view, area rims, the HDRI in every
+# reflection); stage 2 lights like a product shoot: Khronos PBR Neutral
+# (product colour stays true, highlights roll off, the ground still reaches
+# #fff), a glass-coated screen, feathered softboxes and black flags that
+# only the machine sees, a set light only the set sees, and a lens pass.
+STAGE = int(os.environ.get("NUS_STAGE", 2))
+VIEW = os.environ.get("NUS_VIEW", "Khronos PBR Neutral" if STAGE >= 2 else "Standard")
+GROUND = {"white": 1.0, "black": 0.0}  # the film's flat grounds, display-referred
 OPEN_HDRI_ROT = float(os.environ.get("NUS_HDRI_ROT", 40))
 
 
@@ -672,7 +800,17 @@ def shot_open(rig):
     lid(rig, 0, 0)
     lid(rig, 3, OPEN_DEG, "hold")
     off = panel(rig, "off", MAT["black"])
-    on = panel(rig, "on", image_material("Screen window", screen_source("window-ink"), start_beat=4))
+    on_mat = image_material("Screen window", screen_source("window-ink"), start_beat=4)
+    on = panel(rig, "on", on_mat)
+    if STAGE >= 2:
+        # The glass fades as the camera squares up, so the last 3D frame is the
+        # flat capture the film cuts to at 8 — no reflection to jump.
+        coat = 'nodes["Principled BSDF"].inputs["Coat Weight"].default_value'
+        key(on_mat.node_tree, coat, 5, 1.0)
+        key(on_mat.node_tree, coat, 7.6, 0.0, "hold")
+        nits = 'nodes["Principled BSDF"].inputs["Emission Strength"].default_value'
+        key(on_mat.node_tree, nits, 5, LOOK["screen_nits"])
+        key(on_mat.node_tree, nits, 7.6, 1.0, "hold")  # 1.0 through Khronos PBR Neutral = the capture's own sRGB
     for ob, vis in ((off, (False, True)), (on, (True, False))):
         key(ob, "hide_render", 0, vis[0], "hold")
         key(ob, "hide_render", 4, vis[1], "hold")
@@ -774,7 +912,7 @@ def shot_internals(rig):
         s = slab(name, w, d, 0.003, None)
         s.parent = parent
         s.location = (cx, cy, z0)
-        mat = image_material(f"Face {name}", layer_source(layers[name]), strength=1.0)
+        mat = image_material(f"Face {name}", layer_source(layers[name]), strength=1.0, glass=False)  # layers are diagrams, not glass
         # Crop the capture onto this slab's top.
         u0, u1 = x0 / 1600, x1 / 1600
         v0, v1 = 1 - y1 / 1000, 1 - y0 / 1000
@@ -798,7 +936,7 @@ def shot_internals(rig):
     atlas = slab("Glyph atlas", 0.07, 0.07, 0.003, None)
     atlas.parent = root
     atlas.location = (-0.03, 0.02, 0.0032)
-    plane("Face atlas", [(-0.0346, 0.0346, 0.00302), (-0.0346, -0.0346, 0.00302), (0.0346, -0.0346, 0.00302), (0.0346, 0.0346, 0.00302)], [(0, 1), (0, 0), (1, 0), (1, 1)], image_material("Atlas", os.path.join(ROOT, "public", "internals", "atlas.png"), 1.3), atlas)
+    plane("Face atlas", [(-0.0346, 0.0346, 0.00302), (-0.0346, -0.0346, 0.00302), (0.0346, -0.0346, 0.00302), (0.0346, 0.0346, 0.00302)], [(0, 1), (0, 0), (1, 0), (1, 1)], image_material("Atlas", os.path.join(ROOT, "public", "internals", "atlas.png"), 1.3, glass=False), atlas)
     key(atlas, "hide_render", 28, True, "hold")
     key(atlas, "hide_render", 33, False, "hold")
     key(atlas, "location", 33, 0.0032 + 0.06, "hold", index=2)
@@ -867,14 +1005,171 @@ def light_product_only():
     """Rims and sweeps light the machine, never the set: Cycles light linking,
     the product shoot's flags and cutters. The set takes the HDRI and the key."""
     set_names = ("Cyclorama", "Haze", "Floor")
+    rig_names = ("Softbox", "Flag", "Set light")
     product = bpy.data.collections.new("Product")
     bpy.context.scene.collection.children.link(product)
+    stage_set = bpy.data.collections.new("Set")
+    bpy.context.scene.collection.children.link(stage_set)
+    # Set dressing (the Memphis objects) takes neither the product's boxes nor
+    # the set light that drives the cyc to white — only the sun and the fill,
+    # at an exposure where the signals keep their colour.
+    dressing = bpy.data.collections.get("Memphis")
     for ob in bpy.data.objects:
-        if ob.type in ("MESH", "FONT") and not ob.name.startswith(set_names):
+        if dressing and ob.name in dressing.objects:
+            continue
+        elif ob.type in ("MESH", "FONT", "CURVE") and not ob.name.startswith(set_names + rig_names):
             product.objects.link(ob)
+        elif ob.name.startswith(set_names):
+            stage_set.objects.link(ob)
     for ob in bpy.data.objects:
-        if ob.type == "LIGHT" and ob.name.startswith(("Rim", "Sweep")):
+        if ob.name.startswith(("Rim", "Sweep", "Softbox")):
             ob.light_linking.receiver_collection = product
+        elif ob.name.startswith("Set light"):
+            ob.light_linking.receiver_collection = stage_set
+
+
+# ── Stage 2: the product shoot ─────────────────────────────────────────────────
+def _plane(name, loc, size, look):
+    bpy.ops.mesh.primitive_plane_add(size=1, location=loc)
+    ob = bpy.context.object
+    ob.name = name
+    ob.scale = (size[0], size[1], 1)
+    ob.rotation_euler = (Vector(look) - Vector(loc)).to_track_quat("Z", "Y").to_euler()  # +Z faces the subject
+    return ob
+
+
+def softbox(name, loc, size, strength, look=(0, 0, 0.08), feather=0.3, color=(1, 1, 1)):
+    """A softbox the machine sees and the camera doesn't: an emissive panel
+    whose edges feather to nothing, so a reflection in the metal is a soft
+    gradient with no hard rectangle. Light-linked to the product."""
+    ob = _plane(name, loc, size, look)
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.remove(nt.nodes["Principled BSDF"])
+    uv = nt.nodes.new("ShaderNodeTexCoord")
+    xyz = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(uv.outputs["UV"], xyz.inputs[0])
+
+    def edge(axis):  # distance to the nearer edge, 0 at the edge, 0.5 in the middle
+        a = nt.nodes.new("ShaderNodeMath")
+        a.operation = "SUBTRACT"
+        a.inputs[0].default_value = 1.0
+        nt.links.new(xyz.outputs[axis], a.inputs[1])
+        mn = nt.nodes.new("ShaderNodeMath")
+        mn.operation = "MINIMUM"
+        nt.links.new(xyz.outputs[axis], mn.inputs[0])
+        nt.links.new(a.outputs[0], mn.inputs[1])
+        return mn
+
+    both = nt.nodes.new("ShaderNodeMath")
+    both.operation = "MINIMUM"
+    nt.links.new(edge("X").outputs[0], both.inputs[0])
+    nt.links.new(edge("Y").outputs[0], both.inputs[1])
+    ramp = nt.nodes.new("ShaderNodeMapRange")
+    ramp.interpolation_type = "SMOOTHSTEP"
+    ramp.inputs["From Min"].default_value = 0.0
+    ramp.inputs["From Max"].default_value = feather
+    nt.links.new(both.outputs[0], ramp.inputs["Value"])
+    em = nt.nodes.new("ShaderNodeEmission")
+    em.inputs["Color"].default_value = (*color, 1)
+    mul = nt.nodes.new("ShaderNodeMath")
+    mul.operation = "MULTIPLY"
+    mul.inputs[1].default_value = strength * LOOK["softbox"]
+    nt.links.new(ramp.outputs["Result"], mul.inputs[0])
+    nt.links.new(mul.outputs[0], em.inputs["Strength"])
+    nt.links.new(em.outputs[0], nt.nodes["Material Output"].inputs["Surface"])
+    ob.data.materials.append(m)
+    ob.visible_camera = False
+    ob.visible_shadow = False
+    return ob
+
+
+def flag(name, loc, size, look=(0, 0, 0.08)):
+    """Black card: seen only in reflections, where it draws the dark lines
+    that give metal and glass their shape. Blocks no light."""
+    ob = _plane(name, loc, size, look)
+    ob.data.materials.append(principled(name, (0.0, 0.0, 0.0), roughness=1.0, **{"Specular IOR Level": 0.0}))
+    ob.visible_camera = False
+    ob.visible_shadow = False
+    ob.visible_diffuse = False
+    ob.visible_volume_scatter = False
+    return ob
+
+
+def stage(tone):
+    """Light for a product, not a scene. The machine sees a top softbox and
+    two feathered strips (edge light on the chamfers), a long gradient bar
+    above the camera (the diagonal sheen on the glass), and black flags
+    around the lens (so the screen reflects darkness, not the room). The
+    set sees one broad light of its own; neither touches the other."""
+    s = 6.0 if tone == "white" else 10.0  # dark metal reflects ~9 %: the boxes are hot so their reflections read
+    softbox("Softbox top", (0.0, 0.25, 1.15), (1.3, 0.9), 2.2 * s, look=(0, 0.02, 0.05), feather=0.4)
+    softbox("Softbox left", (-0.95, -0.1, 0.32), (0.22, 1.1), 7.0 * s, look=(0, 0, 0.06), feather=0.45)
+    softbox("Softbox right", (0.95, 0.18, 0.36), (0.22, 1.1), 5.0 * s, look=(0, 0, 0.06), feather=0.45)
+    softbox("Softbox bar", (0.1, -1.45, 0.62), (2.6, 0.1), 1.1 * s, look=(0, 0, 0.12), feather=0.5)
+    softbox("Softbox back", (0.0, 0.95, 0.62), (1.4, 0.16), 9.0 * s, look=(0, 0, 0.16), feather=0.45)  # the lid's edge against the ground
+    flag("Flag front", (0.0, -1.7, 0.7), (3.2, 1.8), look=(0, 0, 0.12))
+    flag("Flag low left", (-1.3, -0.9, 0.25), (1.2, 0.8), look=(0, 0, 0.1))
+    if tone == "white":
+        # The cyc goes to white: one broad light over the set, the floor just
+        # under #fff so the machine's shadow reads, the far wall past it.
+        d = bpy.data.lights.new("Set light", "AREA")
+        d.shape = "RECTANGLE"
+        d.size, d.size_y = 2.2, 1.6
+        d.energy = 240 * LOOK["set_light"]
+        ob = bpy.data.objects.new("Set light", d)
+        bpy.context.collection.objects.link(ob)
+        ob.location = (0.25, -0.45, 2.3)  # high and a little forward: a contact shadow that reads, under and behind
+        aim(ob, (0, 0.35, 0))
+        fill = bpy.data.lights.new("Set light fill", "AREA")
+        fill.size = 5.0
+        fill.energy = 210 * LOOK["set_light"]
+        fo = bpy.data.objects.new("Set light fill", fill)
+        bpy.context.collection.objects.link(fo)
+        fo.location = (0.0, 0.2, 3.2)  # carries the cove and wall on past white
+        aim(fo, (0, 1.2, 0.8))
+
+
+def lens():
+    """The lens pass, in the compositor: a faint bloom on what's hot (the
+    screen's whites, the glints), a touch of lateral dispersion at the
+    frame's edges, then the film's flat ground under everything the set
+    doesn't cover — laid after the bloom, so the ground never blooms."""
+    sc = bpy.context.scene
+    sc.render.film_transparent = True
+    sc.use_nodes = True
+    nt = sc.node_tree
+    for n in list(nt.nodes):
+        nt.nodes.remove(n)
+    rl = nt.nodes.new("CompositorNodeRLayers")
+    glare = nt.nodes.new("CompositorNodeGlare")
+    try:
+        glare.glare_type = "BLOOM"
+    except TypeError:
+        glare.glare_type = "FOG_GLOW"
+    glare.quality = "HIGH"
+    for attr, val in (("threshold", 1.2), ("mix", -1 + 0.08 * LOOK["bloom"]), ("size", 7)):
+        if hasattr(glare, attr):
+            setattr(glare, attr, val)
+        elif attr.capitalize() in glare.inputs:
+            glare.inputs[attr.capitalize()].default_value = val
+    lensd = nt.nodes.new("CompositorNodeLensdist")
+    if hasattr(lensd, "use_fit"):
+        lensd.use_fit = True
+    for key, val in (("Distortion", 0.0), ("Dispersion", LOOK["dispersion"])):
+        if key in lensd.inputs:
+            lensd.inputs[key].default_value = val
+    ground = nt.nodes.new("CompositorNodeRGB")
+    g = 20.0 * GROUND[TONE] if VIEW != "Standard" else GROUND[TONE]  # 20 → #fff through Khronos PBR Neutral
+    ground.outputs[0].default_value = (g, g, g, 1)
+    over = nt.nodes.new("CompositorNodeAlphaOver")
+    comp = nt.nodes.new("CompositorNodeComposite")
+    nt.links.new(rl.outputs["Image"], glare.inputs["Image"])
+    nt.links.new(glare.outputs["Image"], lensd.inputs["Image"])
+    nt.links.new(ground.outputs[0], over.inputs[1])
+    nt.links.new(lensd.outputs["Image"], over.inputs[2])
+    nt.links.new(over.outputs["Image"], comp.inputs["Image"])
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -898,8 +1193,9 @@ def setup(opt, factory=True):
     sc.render.fps = FPS
     sc.render.resolution_x, sc.render.resolution_y = 1920, 1080
     sc.render.resolution_percentage = int(opt["scale"])
-    sc.view_settings.view_transform = "Standard"
+    sc.view_settings.view_transform = VIEW
     sc.view_settings.look = "None"
+    sc.view_settings.exposure = LOOK["exposure"]
     sc.render.image_settings.file_format = "PNG"
     sc.render.image_settings.color_mode = "RGBA"
     sc.render.film_transparent = False  # the set is in the frame now
@@ -922,6 +1218,8 @@ def setup(opt, factory=True):
         sc.cycles.denoising_use_gpu = True
         sc.cycles.denoising_quality = "HIGH"
         sc.render.use_persistent_data = True  # BVH and textures stay resident between frames
+        sc.cycles.sample_clamp_indirect = 8.0  # no fireflies off the polished edges
+        sc.cycles.glossy_bounces = 6  # glass over panel over metal
     else:
         sc.render.engine = "BLENDER_EEVEE_NEXT"
         e = sc.eevee
@@ -944,6 +1242,8 @@ def main():
     rig = apple_laptop() if opt["laptop"] == "apple" else laptop()
     {"open": shot_open, "macro": shot_macro, "internals": shot_internals, "outro": shot_outro}[shot](rig)
     light_product_only()
+    if STAGE >= 2:
+        lens()
     finish_keys()
 
     a, b = frames(shot)
