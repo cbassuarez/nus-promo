@@ -1,0 +1,25 @@
+# Built or fetched — rebuild with the npm scripts in README.md
+node_modules/
+out/
+# npm run blender
+public/renders/
+# npm run icon (needs ../nus)
+public/icon/
+# arrives with the reshoot
+public/footage/
+# npm run hdri (Poly Haven, CC0)
+assets/hdri/
+tools/icon-seq/target/
+.venv/
+
+# Your master mix stays local until you choose to publish it
+ableton/bounce.*
+
+# Tool droppings
+.DS_Store
+*.asd
+*.blend1
+ableton/**/Backup/
+
+# macOS folder icons
+Icon?

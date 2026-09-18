@@ -1,0 +1,29 @@
+{
+  "name": "nus-promo",
+  "private": true,
+  "description": "nus promo film. 30 s at 152 bpm, scored on Ableton's Perc Kitchen Kit.",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "pattern": "node scripts/pattern.mjs",
+    "score": "npm run pattern && node scripts/score.mjs",
+    "als": "npm run pattern && python3 scripts/als.py",
+    "render": "npm run footage && npm run score && remotion render Object out/picture.mp4 --codec h264 --crf 14 && npm run mux",
+    "mux": "sh scripts/mux.sh",
+    "render:prores": "npm run score && remotion render Object out/nus-promo.mov --codec prores --prores-profile 4444",
+    "icon": "cd tools/icon-seq && CARGO_TARGET_DIR=../../../nus/target cargo run --release -- ../../public/icon",
+    "still": "remotion still Object",
+    "footage": "node scripts/footage.mjs",
+    "blender": "sh blender/render.sh"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.526",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.526"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.8",
+    "typescript": "5.8.3"
+  }
+}

@@ -1,0 +1,2142 @@
+{
+ "bpm": 152,
+ "beats": 76,
+ "kit": "Perc Kitchen Kit.adg",
+ "sections": [
+  {
+   "beat": 0,
+   "name": "Open"
+  },
+  {
+   "beat": 8,
+   "name": "The loop"
+  },
+  {
+   "beat": 12,
+   "name": "Ports"
+  },
+  {
+   "beat": 20,
+   "name": "Prompt"
+  },
+  {
+   "beat": 24,
+   "name": "Palette"
+  },
+  {
+   "beat": 28,
+   "name": "Compositor"
+  },
+  {
+   "beat": 44,
+   "name": "One action model"
+  },
+  {
+   "beat": 52,
+   "name": "Look"
+  },
+  {
+   "beat": 60,
+   "name": "Close"
+  },
+  {
+   "beat": 64,
+   "name": "nus"
+  }
+ ],
+ "notes": [
+  {
+   "beat": 0,
+   "note": 44,
+   "name": "ice",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 0,
+   "note": 47,
+   "name": "water",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 4,
+   "note": 36,
+   "name": "pan",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 4,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 4,
+   "note": 51,
+   "name": "klang",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 4.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 44,
+   "dur": 0.25
+  },
+  {
+   "beat": 4.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 48,
+   "dur": 0.25
+  },
+  {
+   "beat": 4.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 52,
+   "dur": 0.25
+  },
+  {
+   "beat": 5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 56,
+   "dur": 0.25
+  },
+  {
+   "beat": 5.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 60,
+   "dur": 0.25
+  },
+  {
+   "beat": 5.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 64,
+   "dur": 0.25
+  },
+  {
+   "beat": 5.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 68,
+   "dur": 0.25
+  },
+  {
+   "beat": 6,
+   "note": 37,
+   "name": "pot1",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 6,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 6.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 76,
+   "dur": 0.25
+  },
+  {
+   "beat": 6.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 6.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 84,
+   "dur": 0.25
+  },
+  {
+   "beat": 7,
+   "note": 38,
+   "name": "pot2",
+   "vel": 85,
+   "dur": 0.25
+  },
+  {
+   "beat": 7,
+   "note": 42,
+   "name": "knifes",
+   "vel": 88,
+   "dur": 0.25
+  },
+  {
+   "beat": 7.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 92,
+   "dur": 0.25
+  },
+  {
+   "beat": 7.5,
+   "note": 37,
+   "name": "pot1",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 7.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 96,
+   "dur": 0.25
+  },
+  {
+   "beat": 7.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 8,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 8,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 8,
+   "note": 48,
+   "name": "glass",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 8.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 9,
+   "note": 39,
+   "name": "strike",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 9,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 9,
+   "note": 43,
+   "name": "drip3",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 9.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 9.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 10,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 10,
+   "note": 45,
+   "name": "drip4",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 10.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 10.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 11,
+   "note": 39,
+   "name": "strike",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 11,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 11.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 11.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 11.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 11.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 45,
+   "dur": 0.25
+  },
+  {
+   "beat": 12,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 12,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 12,
+   "note": 48,
+   "name": "glass",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 12.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 13,
+   "note": 39,
+   "name": "strike",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 13,
+   "note": 40,
+   "name": "drip1",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 13,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 13.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 13.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 14,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 14,
+   "note": 43,
+   "name": "drip3",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 14.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 14.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 15,
+   "note": 39,
+   "name": "strike",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 15,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 15,
+   "note": 45,
+   "name": "drip4",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 15.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 15.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 15.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 45,
+   "dur": 0.25
+  },
+  {
+   "beat": 16,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 16,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 16,
+   "note": 49,
+   "name": "kettle",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 16.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 17,
+   "note": 39,
+   "name": "strike",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 17,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 17,
+   "note": 49,
+   "name": "kettle",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 17.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 17.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 18,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 18,
+   "note": 50,
+   "name": "kling",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 18.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 18.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 19,
+   "note": 39,
+   "name": "strike",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 19,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 19.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 19.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 19.5,
+   "note": 47,
+   "name": "water",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 19.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 45,
+   "dur": 0.25
+  },
+  {
+   "beat": 20,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 20,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 20,
+   "note": 43,
+   "name": "drip3",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 20,
+   "note": 48,
+   "name": "glass",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 20.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 21,
+   "note": 39,
+   "name": "strike",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 21,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 21.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 21.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 22,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 22,
+   "note": 45,
+   "name": "drip4",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 22.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 22.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 23,
+   "note": 39,
+   "name": "strike",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 23,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 23.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 23.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 23.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 45,
+   "dur": 0.25
+  },
+  {
+   "beat": 23.875,
+   "note": 42,
+   "name": "knifes",
+   "vel": 60,
+   "dur": 0.25
+  },
+  {
+   "beat": 24,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 24,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 24,
+   "note": 48,
+   "name": "glass",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 24.25,
+   "note": 49,
+   "name": "kettle",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 24.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 25,
+   "note": 39,
+   "name": "strike",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 25,
+   "note": 43,
+   "name": "drip3",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 25,
+   "note": 48,
+   "name": "glass",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 25.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 25.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 26,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 26.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 26.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 27,
+   "note": 38,
+   "name": "pot2",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 27,
+   "note": 39,
+   "name": "strike",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 27,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 27.25,
+   "note": 37,
+   "name": "pot1",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 27.5,
+   "note": 38,
+   "name": "pot2",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 27.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 27.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 27.75,
+   "note": 37,
+   "name": "pot1",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 27.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 45,
+   "dur": 0.25
+  },
+  {
+   "beat": 28,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 28,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 28,
+   "note": 44,
+   "name": "ice",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 28,
+   "note": 51,
+   "name": "klang",
+   "vel": 127,
+   "dur": 0.25
+  },
+  {
+   "beat": 28.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 28.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 28.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 29,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 29,
+   "note": 44,
+   "name": "ice",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 29.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 29.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 29.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 30,
+   "note": 37,
+   "name": "pot1",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 30,
+   "note": 39,
+   "name": "strike",
+   "vel": 118,
+   "dur": 0.25
+  },
+  {
+   "beat": 30,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 30.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 30.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 30.75,
+   "note": 36,
+   "name": "pan",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 30.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 31,
+   "note": 38,
+   "name": "pot2",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 31,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 31,
+   "note": 44,
+   "name": "ice",
+   "vel": 66,
+   "dur": 0.25
+  },
+  {
+   "beat": 31.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 31.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 31.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 32,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 32,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 32,
+   "note": 48,
+   "name": "glass",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 32.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 32.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 32.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 33,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 33,
+   "note": 44,
+   "name": "ice",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 33,
+   "note": 50,
+   "name": "kling",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 33.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 33.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 33.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 34,
+   "note": 39,
+   "name": "strike",
+   "vel": 118,
+   "dur": 0.25
+  },
+  {
+   "beat": 34,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 34.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 34.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 34.75,
+   "note": 36,
+   "name": "pan",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 34.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 35,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 35,
+   "note": 44,
+   "name": "ice",
+   "vel": 66,
+   "dur": 0.25
+  },
+  {
+   "beat": 35.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 35.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 35.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 36,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 36,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 36,
+   "note": 49,
+   "name": "kettle",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 36.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 36.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 36.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 37,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 37,
+   "note": 44,
+   "name": "ice",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 37.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 37.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 37.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 38,
+   "note": 39,
+   "name": "strike",
+   "vel": 118,
+   "dur": 0.25
+  },
+  {
+   "beat": 38,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 38,
+   "note": 50,
+   "name": "kling",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 38.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 38.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 38.75,
+   "note": 36,
+   "name": "pan",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 38.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 39,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 39,
+   "note": 44,
+   "name": "ice",
+   "vel": 66,
+   "dur": 0.25
+  },
+  {
+   "beat": 39.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 39.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 39.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 40,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 40,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 40.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 40.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 40.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 41,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 41,
+   "note": 44,
+   "name": "ice",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 41.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 41.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 41.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 42,
+   "note": 39,
+   "name": "strike",
+   "vel": 118,
+   "dur": 0.25
+  },
+  {
+   "beat": 42,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 42,
+   "note": 47,
+   "name": "water",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 42.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 42.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 42.75,
+   "note": 36,
+   "name": "pan",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 42.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 43,
+   "note": 42,
+   "name": "knifes",
+   "vel": 70,
+   "dur": 0.25
+  },
+  {
+   "beat": 43,
+   "note": 44,
+   "name": "ice",
+   "vel": 66,
+   "dur": 0.25
+  },
+  {
+   "beat": 43,
+   "note": 47,
+   "name": "water",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 43.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 43.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 43.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 42,
+   "dur": 0.25
+  },
+  {
+   "beat": 44,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 44,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 44,
+   "note": 51,
+   "name": "klang",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 44.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 45,
+   "note": 39,
+   "name": "strike",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 45,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 45,
+   "note": 43,
+   "name": "drip3",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 45.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 45.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 46,
+   "note": 40,
+   "name": "drip1",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 46,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 46.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 46.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 47,
+   "note": 39,
+   "name": "strike",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 47,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 47,
+   "note": 43,
+   "name": "drip3",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 47.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 47.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 47.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 45,
+   "dur": 0.25
+  },
+  {
+   "beat": 48,
+   "note": 36,
+   "name": "pan",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 48,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 48,
+   "note": 45,
+   "name": "drip4",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 48.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 49,
+   "note": 39,
+   "name": "strike",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 49,
+   "note": 41,
+   "name": "drip2",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 49,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 49.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 49.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 50,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 50.5,
+   "note": 36,
+   "name": "pan",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 50.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 51,
+   "note": 38,
+   "name": "pot2",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 51,
+   "note": 39,
+   "name": "strike",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 51,
+   "note": 42,
+   "name": "knifes",
+   "vel": 72,
+   "dur": 0.25
+  },
+  {
+   "beat": 51.25,
+   "note": 37,
+   "name": "pot1",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 51.5,
+   "note": 38,
+   "name": "pot2",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 51.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 55,
+   "dur": 0.25
+  },
+  {
+   "beat": 51.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 51.75,
+   "note": 37,
+   "name": "pot1",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 51.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 45,
+   "dur": 0.25
+  },
+  {
+   "beat": 52,
+   "note": 36,
+   "name": "pan",
+   "vel": 118,
+   "dur": 0.25
+  },
+  {
+   "beat": 52,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 52,
+   "note": 44,
+   "name": "ice",
+   "vel": 85,
+   "dur": 0.25
+  },
+  {
+   "beat": 52,
+   "note": 51,
+   "name": "klang",
+   "vel": 115,
+   "dur": 0.25
+  },
+  {
+   "beat": 52.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 53,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 53,
+   "note": 49,
+   "name": "kettle",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 53.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 54,
+   "note": 39,
+   "name": "strike",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 54,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 54,
+   "note": 49,
+   "name": "kettle",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 54.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 55,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 55,
+   "note": 49,
+   "name": "kettle",
+   "vel": 100,
+   "dur": 0.25
+  },
+  {
+   "beat": 55.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 56,
+   "note": 36,
+   "name": "pan",
+   "vel": 118,
+   "dur": 0.25
+  },
+  {
+   "beat": 56,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 56,
+   "note": 48,
+   "name": "glass",
+   "vel": 110,
+   "dur": 0.25
+  },
+  {
+   "beat": 56.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 57,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 57.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 58,
+   "note": 39,
+   "name": "strike",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 58,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 58.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 59,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 59.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 40,
+   "dur": 0.25
+  },
+  {
+   "beat": 60,
+   "note": 36,
+   "name": "pan",
+   "vel": 105,
+   "dur": 0.25
+  },
+  {
+   "beat": 60,
+   "note": 47,
+   "name": "water",
+   "vel": 95,
+   "dur": 0.25
+  },
+  {
+   "beat": 61.5,
+   "note": 46,
+   "name": "spoons",
+   "vel": 85,
+   "dur": 0.25
+  },
+  {
+   "beat": 62,
+   "note": 42,
+   "name": "knifes",
+   "vel": 50,
+   "dur": 0.25
+  },
+  {
+   "beat": 62,
+   "note": 44,
+   "name": "ice",
+   "vel": 80,
+   "dur": 0.25
+  },
+  {
+   "beat": 62.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 58,
+   "dur": 0.25
+  },
+  {
+   "beat": 62.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 66,
+   "dur": 0.25
+  },
+  {
+   "beat": 62.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 74,
+   "dur": 0.25
+  },
+  {
+   "beat": 63,
+   "note": 42,
+   "name": "knifes",
+   "vel": 82,
+   "dur": 0.25
+  },
+  {
+   "beat": 63.25,
+   "note": 42,
+   "name": "knifes",
+   "vel": 90,
+   "dur": 0.25
+  },
+  {
+   "beat": 63.5,
+   "note": 42,
+   "name": "knifes",
+   "vel": 98,
+   "dur": 0.25
+  },
+  {
+   "beat": 63.75,
+   "note": 42,
+   "name": "knifes",
+   "vel": 106,
+   "dur": 0.25
+  },
+  {
+   "beat": 64,
+   "note": 36,
+   "name": "pan",
+   "vel": 127,
+   "dur": 0.25
+  },
+  {
+   "beat": 64,
+   "note": 51,
+   "name": "klang",
+   "vel": 120,
+   "dur": 0.25
+  },
+  {
+   "beat": 66,
+   "note": 50,
+   "name": "kling",
+   "vel": 85,
+   "dur": 0.25
+  },
+  {
+   "beat": 68,
+   "note": 48,
+   "name": "glass",
+   "vel": 80,
+   "dur": 0.25
+  }
+ ],
+ "cuelume": [
+  {
+   "beat": 64,
+   "cue": "arrival",
+   "gain": 0.9
+  }
+ ]
+}
