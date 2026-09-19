@@ -34,7 +34,8 @@ from mathutils import Vector
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCORE = json.load(open(os.path.join(ROOT, "src", "score.json")))
 FPS = 60
-FPB = FPS * 60 / SCORE["bpm"]  # 23.684 frames a beat
+BPM = float(os.environ.get("NUS_BPM", SCORE["bpm"]))  # NUS_BPM: the same film at another tempo (the varispeed cuts)
+FPB = FPS * 60 / BPM  # 23.684 frames a beat at 152
 SHOTS = os.path.join(ROOT, "public", "shots")
 FOOTAGE = os.path.join(ROOT, "public", "footage")
 FONT = os.path.join(ROOT, "public", "fonts", "IBMPlexMono-Regular.ttf")

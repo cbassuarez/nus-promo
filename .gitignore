@@ -34,3 +34,6 @@ __pycache__/
 # lighting workfiles: they hold the Apple model and Light Wrangler textures — local only
 blender/rigs/
 blender/*.blend
+
+# 3D plates for the cut (renders of the Apple stand-in) — local only
+public/plates/

@@ -15,6 +15,9 @@ export const Root = () => (
     <Composition id="Cut" component={Cut} durationInFrames={DURATION} fps={FPS} width={1920} height={1080} />
     <Composition id="CutVertical" component={Cut} durationInFrames={DURATION} fps={FPS} width={1080} height={1920} />
     <Composition id="CutFeed" component={Cut} durationInFrames={DURATION} fps={FPS} width={1080} height={1350} />
+    {/* The same cut with room to breathe: the score varispeeded to 2/3, 45.000 s. */}
+    <Composition id="Cut45" component={Cut} durationInFrames={2700} fps={FPS} width={1920} height={1080} defaultProps={{ bpm: 101.333333 }} />
+    <Composition id="Cut45Vertical" component={Cut} durationInFrames={2700} fps={FPS} width={1080} height={1920} defaultProps={{ bpm: 101.333333 }} />
     {/* Styleframes: stills of the new cut's sections — see PLAN.md. */}
     <Composition id="Styleframe" component={Styleframe} durationInFrames={1} fps={FPS} width={1920} height={1080} defaultProps={{ id: 'agents' }} />
     <Composition id="StyleframeVertical" component={Styleframe} durationInFrames={1} fps={FPS} width={1080} height={1920} defaultProps={{ id: 'agents' }} />

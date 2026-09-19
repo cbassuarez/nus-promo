@@ -19,7 +19,7 @@ const BEAT = 99; // typing complete: styleframes show the settled state
 // starts, `u` the beat it must be gone by (captions backspace out before
 // it). A styleframe is the same component at t = 99. `frame` puts a Blender
 // render sequence behind the sections that sit on 3D.
-export type Timing = { t?: number; f?: number; u?: number; frame?: number; home?: boolean };
+export type Timing = { t?: number; f?: number; u?: number; plate?: string; home?: boolean };
 const shot = (name: string) => staticFile(`shots/${name}.png`);
 
 // A capture as a hard-shadowed card: beside the caption in 16:9, below it in
@@ -58,7 +58,7 @@ function captionFor(section: Section, text: { kicker: string; headline: string; 
 
 // ── The frames ──────────────────────────────────────────────────────────────
 
-export function Agents({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
+export function Agents({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   const { W, H, wide, k, m, col } = useFrame();
   const c = useCard();
   const v = SIGNAL.violet;
@@ -92,7 +92,7 @@ export function Agents({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
   );
 }
 
-export function Ports({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
+export function Ports({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   const { W, wide, k, m, col } = useFrame();
   const c = useCard();
   const g = SIGNAL.gold;
@@ -127,7 +127,7 @@ export function Ports({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
   );
 }
 
-export function Language({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
+export function Language({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   const { k, W, H, wide, m } = useFrame();
   const size = (wide ? 27 : 34) * k;
   const sig = SIGNAL.teal;
@@ -172,7 +172,7 @@ export function Language({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) 
   );
 }
 
-export function Held({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
+export function Held({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   const { k, W, H, wide, m } = useFrame();
   const size = (wide ? 26 : 30) * k;
   const g = SIGNAL.green;
@@ -206,12 +206,12 @@ export function Held({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
   );
 }
 
-export function IDE({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
+export function IDE({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   const { W, H, wide, k, m, col } = useFrame();
   const b = SIGNAL.blue;
   return (
     <Ground section="ide">
-      <Img src={staticFile(frame !== undefined ? `renders/internals/f${String(Math.min(1042, Math.max(664, frame))).padStart(4, '0')}.png` : 'lookdev/internals-0960.png')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '66% 50%' }} />
+      <Img src={plate ?? staticFile('lookdev/internals-0960.png')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '66% 50%' }} />
       {captionFor('ide', { kicker: 'Architecture · 04', headline: 'built like an *IDE*.', sub: 'one native compositor. real chromium, drawn beside your shells.' }, wide, W, m, col, { t, f, u })}
       <Pop beat={t} at={f + 0.5} x={m} y={(wide ? H * 0.12 : H * 0.08) + (wide ? 390 : 480) * k}>
         <Squiggle width={330 * k} height={36 * k} colour={b} weight={13 * k} />
@@ -223,7 +223,7 @@ export function IDE({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
   );
 }
 
-export function Yours({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
+export function Yours({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   const { W, H, wide, k, m, col } = useFrame();
   const c = useCard();
   const presets: [string, string[], string][] = [
@@ -263,12 +263,12 @@ export function Yours({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
   );
 }
 
-export function Private({ t = BEAT, f = 0, u = Infinity, frame, home }: Timing = {}) {
+export function Private({ t = BEAT, f = 0, u = Infinity, plate, home }: Timing = {}) {
   const { W, H, wide, k, m, col } = useFrame();
   const r = SIGNAL.red;
   return (
     <Ground section="private">
-      <Img src={staticFile(frame !== undefined ? `renders/outro/f${String(frame).padStart(4, '0')}.png` : 'lookdev/apple-outro-1240.png')} style={wide ? { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '62% 50%' } : { position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: '58%', objectFit: 'cover', objectPosition: '66% 50%' }} />
+      <Img src={plate ?? staticFile('lookdev/apple-outro-1240.png')} style={wide ? { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '62% 50%' } : { position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: '58%', objectFit: 'cover', objectPosition: '66% 50%' }} />
       {captionFor('private', home ? { kicker: 'Home · 07', headline: 'you, *on this machine*.', sub: 'your profile is a file. no server, nothing counted, nothing sent.' } : { kicker: 'Private · 08', headline: 'no account.\nno server.\nno *telemetry*.', sub: 'a file in a folder is the whole account. sync is sealed with a key you copy.' }, wide, W, m, col, { t, f, u })}
       <Pop beat={t} at={f + 0.5} x={m} y={wide ? H - 150 * k : H * 0.4} rotate={-3}>
         <Stripes width={280 * k} height={44 * k} colour={r} />
@@ -277,7 +277,7 @@ export function Private({ t = BEAT, f = 0, u = Infinity, frame, home }: Timing =
   );
 }
 
-export function Home({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
+export function Home({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   const { W, H, wide, k, m, col } = useFrame();
   const r = SIGNAL.red;
   const c = useCard();
@@ -300,7 +300,7 @@ export function Home({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
   );
 }
 
-export function NumberCard({ t = BEAT, f = 0, u = Infinity, frame }: Timing = {}) {
+export function NumberCard({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   const { W, H, wide, k, m } = useFrame();
   return (
     <AbsoluteFill style={{ background: WHITE }}>
