@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 import { AbsoluteFill, Img, useCurrentFrame } from 'remotion';
 import { EndCard } from './design/Wordmark';
 import { FPS } from './grid';
-import { plate } from './plates';
+import { plate, tagsAt, useLabels } from './plates';
 import { Agents, Editor, Held, IDE, Language, NumberCard, Ports, Private, Yours } from './Styleframes';
 import cut from './cut.json';
 import { BandWipe, CellResolve, Shutter } from './Transitions';
@@ -24,14 +24,15 @@ const Plate = ({ src, bg }: { src: string; bg: string }) => (
   </AbsoluteFill>
 );
 
-const PICTURE: Record<string, (beat: number, frame: number) => ReactNode> = {
+type Ctx = { labels: ReturnType<typeof useLabels> };
+const PICTURE: Record<string, (beat: number, frame: number, ctx: Ctx) => ReactNode> = {
   open: (b) => <Plate src={plate('open', b)} bg="#ffffff" />,
   language: (b) => <Language t={b} f={8} u={12} />,
   ports: (b) => <Ports t={b} f={12} u={20} />,
   held: (b) => <Held t={b} f={20} u={24} />,
   macro: (b) => <Plate src={plate('macro', b)} bg="#ffffff" />,
   number: (b) => <NumberCard t={b} f={25} />,
-  ide: (b) => <IDE t={b} f={28.5} u={38} plate={plate('internals', b)} />,
+  ide: (b, _, c) => <IDE t={b} f={28.5} u={38} plate={plate('internals', b)} tags={tagsAt(c.labels, 'internals', b)} />,
   editor: (b) => <Editor t={b} f={38} u={44} />,
   agents: (b) => <Agents t={b} f={44} u={52} />,
   yours: (b) => <Yours t={b} f={52} u={56} />,
@@ -43,7 +44,7 @@ const PICTURE: Record<string, (beat: number, frame: number) => ReactNode> = {
 export const CUT = cut.sections;
 const TRANSITIONS = cut.transitions as { from: number; to: number; kind: 'shutter' | 'band' | 'cells'; a: string; b: string }[];
 const at = (beat: number) => CUT.find((s) => beat >= s.from && beat < s.to) ?? CUT[CUT.length - 1];
-const draw = (name: string, beat: number, frame: number) => PICTURE[name](beat, frame);
+const draw = (name: string, beat: number, frame: number, ctx: Ctx) => PICTURE[name](beat, frame, ctx);
 
 // `bpm`: the same cut at another tempo — 152 is the score as written;
 // slower is the score varispeeded (the bounce, resampled), and everything on
@@ -51,12 +52,13 @@ const draw = (name: string, beat: number, frame: number) => PICTURE[name](beat, 
 export const Cut = ({ bpm = 152 }: { bpm?: number }) => {
   const frame = useCurrentFrame();
   const beat = frame / ((FPS * 60) / bpm);
+  const ctx = { labels: useLabels('internals') };
   const t = TRANSITIONS.find((x) => beat >= x.from && beat < x.to);
-  let picture: ReactNode = draw(at(beat).name, beat, frame);
+  let picture: ReactNode = draw(at(beat).name, beat, frame, ctx);
   if (t) {
     const p = (beat - t.from) / (t.to - t.from);
-    const a = draw(t.a, beat, frame);
-    const b = draw(t.b, beat, frame);
+    const a = draw(t.a, beat, frame, ctx);
+    const b = draw(t.b, beat, frame, ctx);
     picture = t.kind === 'shutter' ? <Shutter p={p} a={a} b={b} /> : t.kind === 'band' ? <BandWipe p={p} a={a} b={b} /> : <CellResolve p={p} frame={frame} a={a} b={b} />;
   }
   return <AbsoluteFill style={{ background: '#ffffff', overflow: 'hidden' }}>{picture}</AbsoluteFill>;

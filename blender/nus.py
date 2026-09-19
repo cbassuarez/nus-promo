@@ -133,6 +133,20 @@ def image_material(name, path, strength=1.0, gloss=0.18, start_beat=0, glass=Tru
     if VIEW == "Khronos PBR Neutral":
         picture = display_inverse(nt, picture)
     nt.links.new(picture, p.inputs["Emission Color"])
+    guide = LOOK["albedo_guide"] if glass else LOOK["diagram_albedo"]
+    if STAGE >= 2 and not glass:
+        p.inputs["Specular IOR Level"].default_value = 0.0  # a diagram has no sheen: the top light washed it white
+    if STAGE >= 2 and guide > 0:
+        # The denoiser reads a surface's albedo to know what detail to keep;
+        # a pure emitter's is black, so it smears the UI's text into blotches.
+        # A trace of the picture in the base colour gives it the detail back
+        # without visibly lighting the screen.
+        dim = nt.nodes.new("ShaderNodeMix")
+        dim.data_type = "RGBA"
+        dim.inputs["Factor"].default_value = guide
+        dim.inputs["A"].default_value = (0, 0, 0, 1)
+        nt.links.new(tex.outputs["Color"], dim.inputs["B"])
+        nt.links.new(dim.outputs["Result"], p.inputs["Base Color"])
     p.inputs["Emission Strength"].default_value = strength
     if STAGE >= 2 and glass:
         # A display is light under glass: no sheen of its own, a clear coat
@@ -763,7 +777,7 @@ OPEN_DEG = 112
 LOOK = {"white_hdri": 0.15, "white_key": 20, "white_rims": 160, "white_cyc": 0.86, "black_hdri": 0.12, "black_rough": 0.3, "black_spec": 0.3,
         # Stage 2 (NUS_STAGE=2, the default): the product-photography stage.
         "exposure": 0.0, "screen_nits": 1.5, "screen_coat": 0.03, "set_light": 1.0, "softbox": 1.0, "bloom": 1.0, "dispersion": 0.004,
-        "metal_rough": 0.55, "bead": 1.0, "hdri_clamp": 2.0, "macro_edge": 0.3, "macro_stop": 0.0}
+        "metal_rough": 0.55, "bead": 1.0, "hdri_clamp": 2.0, "macro_edge": 0.3, "macro_stop": 0.0, "albedo_guide": 0.0, "diagram_albedo": 0.35}
 LOOK = {k: float(os.environ.get("NUS_" + k.upper(), v)) for k, v in LOOK.items()}
 # Stage 1 is the first look (Standard view, area rims, the HDRI in every
 # reflection); stage 2 lights like a product shoot: Khronos PBR Neutral
@@ -900,6 +914,27 @@ def slab(name, w, d, h, mat_top):
     return ob
 
 
+LABELS = []  # (text, parent, local point, beat on, beat off): anchors the cut draws as type
+
+
+def export_labels(sc, a, b, path):
+    """Where each label's anchor lands in frame, per frame: x, y from the top
+    left, 0–1 of the 16:9 render; `on`/`off` in beats."""
+    from bpy_extras.object_utils import world_to_camera_view
+    out = {"fpb": FPB, "labels": [{"text": t, "on": on, "off": off} for t, _, _, on, off in LABELS], "frames": {}}
+    for f in range(a, b + 1):
+        sc.frame_set(f)
+        pts = []
+        for _, parent, loc, _, _ in LABELS:
+            w = parent.matrix_world @ Vector(loc)
+            v = world_to_camera_view(sc, sc.camera, w)
+            pts.append([round(v.x, 5), round(1 - v.y, 5)])
+        out["frames"][str(f)] = pts
+    with open(path, "w") as fh:
+        json.dump(out, fh)
+    print(f"LABELS {len(LABELS)} × {b - a + 1} frames → {os.path.relpath(path, ROOT)}", flush=True)
+
+
 def shot_internals(rig):
     # The laptop is hidden: this is the software's own hardware.
     for ob in bpy.data.objects:
@@ -959,6 +994,13 @@ def shot_internals(rig):
     key(atlas, "hide_render", 43, True, "hold")
     tabs.append((atlas, "Glyph atlas", (-0.035, -0.035 - 0.012, 0.0015), 36))
     # Labels: a tab off each slab's front edge, set on its beat.
+    if STAGE >= 2:
+        # The labels aren't rendered: 3D type at plate resolution, through
+        # DOF and the denoiser, comes out mush. Their anchors are exported per
+        # frame (labels.json beside the frames) and the cut sets them as
+        # crisp type on top.
+        LABELS.extend((label, parent, loc, beat, 42) for parent, label, loc, beat in tabs)
+        tabs = []
     white = principled("Label", (1, 1, 1), roughness=0.5, **{"Emission Color": (1, 1, 1, 1), "Emission Strength": 1.6})
     for parent, label, loc, beat in tabs:
         right = label.startswith("Chromium")
@@ -976,7 +1018,7 @@ def shot_internals(rig):
     bpy.context.collection.objects.link(so)
     so.location = (0.05, 0.1, 0.9)
     aim(so, (0, 0, 0))
-    cam, look = camera(50, 9.0)
+    cam, look = camera(50, 16.0 if STAGE >= 2 else 9.0)  # stage 2: the layers read, front to back
     back = 1.18 if STAGE >= 2 else 1.0  # stage 2: the whole stack in frame, room left for the caption
     key(cam, "location", 28, tuple(Vector((0.40, -0.56, 0.42)) * back), "linear")
     key(cam, "location", 44, tuple(Vector((0.34, -0.54, 0.37)) * back), "linear")
@@ -1561,6 +1603,8 @@ def main():
     out = opt.get("out") or os.path.join(ROOT, "public", "renders", shot)
     os.makedirs(out, exist_ok=True)
     sc.render.filepath = os.path.join(out, "f")
+    if LABELS:
+        export_labels(sc, a, b, os.path.join(out, "labels.json"))
     if opt.get("rig-out"):
         return write_rig(shot, sc, force=opt.get("force") == "1")
     if opt.get("save"):

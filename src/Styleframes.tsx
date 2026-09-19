@@ -8,10 +8,11 @@ import type { ReactNode } from 'react';
 import { AbsoluteFill, Img, staticFile } from 'remotion';
 import { Caption } from './design/Caption';
 import { useFrame } from './design/layout';
-import { Dots, Pop, Solid, Squiggle, Sticker, Stripes } from './design/Memphis';
+import { Dots, Pop, pop, Solid, Squiggle, Sticker, Stripes } from './design/Memphis';
 import { ActionBlock, AskBand, Caret, CodeCard, Completion, EditorPane, Line, PresetCard, ProfileCard, Shell, T, Welcome } from './design/Mocks';
-import { BLACK, DIM_ON_WHITE, INK, MONO, SECTIONS, SIGNAL, type Section, WHITE } from './design/tokens';
+import { BLACK, DIM_ON_WHITE, INK, MONO, PAPER, SECTIONS, SIGNAL, type Section, WHITE } from './design/tokens';
 import { EndCard } from './design/Wordmark';
+import type { Tag } from './plates';
 
 const BEAT = 99; // typing complete: styleframes show the settled state
 
@@ -19,7 +20,7 @@ const BEAT = 99; // typing complete: styleframes show the settled state
 // starts, `u` the beat it must be gone by (captions backspace out before
 // it). A styleframe is the same component at t = 99. `frame` puts a Blender
 // render sequence behind the sections that sit on 3D.
-export type Timing = { t?: number; f?: number; u?: number; plate?: string; home?: boolean };
+export type Timing = { t?: number; f?: number; u?: number; plate?: string; home?: boolean; tags?: Tag[] };
 const shot = (name: string) => staticFile(`shots/${name}.png`);
 
 // A capture as a hard-shadowed card: beside the caption in 16:9, below it in
@@ -206,7 +207,7 @@ export function Held({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
   );
 }
 
-export function IDE({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
+export function IDE({ t = BEAT, f = 0, u = Infinity, plate, tags = [] }: Timing = {}) {
   const { W, H, wide, k, m, col } = useFrame();
   const b = SIGNAL.blue;
   return (
@@ -219,7 +220,38 @@ export function IDE({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
       <Pop beat={t} at={f + 0.5} x={W - 330 * k} y={H - 250 * k}>
         <Dots width={360 * k} height={280 * k} colour={b} pitch={20 * k} from="bottom-right" />
       </Pop>
+      <LayerTags tags={tags} t={t} objectX={0.66} />
     </Ground>
+  );
+}
+
+// The layer labels, set as type over the plate: a paper tag with the kit's
+// ink outline and a hard shadow in the section's blue, a short leader to the
+// point on the slab it names. Anchors come from the render (plates.ts).
+function LayerTags({ tags, t, objectX }: { tags: Tag[]; t: number; objectX: number }) {
+  const { W, H, k } = useFrame();
+  const s = Math.max(W / 1920, H / 1080); // the plate is drawn object-fit: cover
+  const ox = (W - 1920 * s) * objectX;
+  const oy = (H - 1080 * s) / 2;
+  const b = SIGNAL.blue;
+  return (
+    <>
+      {tags.map((g, i) => {
+        const p = pop(t, g.on, 0.3);
+        if (p <= 0 || t >= g.off) return null;
+        const x = ox + g.x * 1920 * s;
+        const y = oy + g.y * 1080 * s;
+        const right = g.text.startsWith('Chromium');
+        const lead = (46 + 10 * (i % 2)) * k;
+        return (
+          <div key={g.text} style={{ position: 'absolute', left: x, top: y, transform: `scale(${p})`, transformOrigin: '0 0' }}>
+            <div style={{ position: 'absolute', left: -5 * k, top: -5 * k, width: 10 * k, height: 10 * k, borderRadius: '50%', background: b, border: `2px solid ${PAPER}` }} />
+            <div style={{ position: 'absolute', left: right ? 0 : -lead, top: 0, width: lead, height: 2, background: PAPER, opacity: 0.8 }} />
+            <div style={{ position: 'absolute', top: -14 * k, [right ? 'left' : 'right']: lead - (right ? -2 : 2), whiteSpace: 'nowrap', background: PAPER, color: INK, border: `2px solid ${INK}`, boxShadow: `${5 * k}px ${5 * k}px 0 ${b}`, fontFamily: MONO, fontWeight: 600, fontSize: 15 * k, letterSpacing: '0.02em', padding: `${3 * k}px ${9 * k}px` }}>{g.text}</div>
+          </div>
+        );
+      })}
+    </>
   );
 }
 

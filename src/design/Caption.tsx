@@ -39,14 +39,15 @@ export function Caption({ beat, from, until = Infinity, kicker, headline, sub, s
   const dim = ground === 'white' ? DIM_ON_WHITE : DIM_ON_BLACK;
   const colour = SIGNAL[signal];
   const head = parse(headline);
-  // A headline is done within ~1.5 beats however long it is (never slower
-  // than 14 characters a beat): a four-beat section still leaves two to read.
-  const rate = base ?? Math.max(14, head.length / 1.5);
+  // Typing is the entrance, reading is the point: the headline lands within
+  // ¾ of a beat however long it is, the sub right behind it, and the whole
+  // caption then holds until a quick erase in the last third of a beat.
+  const rate = base ?? Math.max(20, head.length / 0.75);
   const subChars = sub ? [...sub] : [];
   const headDone = from + head.length / rate;
-  const subRate = rate * 2.2;
-  // Out: the half-beat before `until`, everything backspaces at once-ish.
-  const erase = Math.max(0, Math.min(1, (beat - (until - 0.5)) / 0.5));
+  const subRate = Math.max(rate * 1.6, subChars.length / 0.6);
+  // Out: the last third of a beat before `until`, a quick backspace.
+  const erase = Math.max(0, Math.min(1, (beat - (until - 0.35)) / 0.35));
   const shownHead = Math.floor(Math.min(head.length, (beat - from) * rate) * (1 - erase));
   const shownSub = Math.floor(Math.min(subChars.length, Math.max(0, (beat - headDone - 0.1) * subRate)) * (1 - erase));
   const typing = beat < headDone + (sub ? subChars.length / subRate + 0.1 : 0);
