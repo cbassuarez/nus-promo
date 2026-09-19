@@ -30,3 +30,7 @@ assets/models/
 # look-dev renders used by styleframes (Apple model; local only)
 public/lookdev/
 __pycache__/
+
+# lighting workfiles: they hold the Apple model and Light Wrangler textures — local only
+blender/rigs/
+blender/*.blend

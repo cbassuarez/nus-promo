@@ -195,3 +195,53 @@ export function Welcome({ size, accent }: { size: number; accent: string }) {
     </div>
   );
 }
+
+// The editor pane (editor.rs): a file in the terminal's monospace, ruled,
+// tree-sitter colour, a diagnostic from the language server under the
+// offending expression and its hover card.
+export function EditorPane({ size, accent }: { size: number; accent: string }) {
+  const code: [string, string?][][] = [
+    [['use', T.magenta], [' std::path::{Path, PathBuf};', T.fg]],
+    [['']],
+    [['/// Every file under `root` the rules apply to.', T.dim]],
+    [['pub fn ', T.magenta], ['targets', T.blue], ['(root: &Path) -> Vec<PathBuf> {', T.fg]],
+    [['    walk(root).filter(|p| ', T.fg], ['matches', T.blue], ['(p)).collect()', T.fg]],
+    [['}', T.fg]],
+    [['']],
+    [['fn ', T.magenta], ['matches', T.blue], ['(p: &Path) -> bool {', T.fg]],
+    [['    p.extension() == ', T.fg], ['SQUIGGLE', T.fg]],
+    [['}', T.fg]],
+  ];
+  const line = (runs: [string, string?][], i: number) => (
+    <div key={i} style={{ display: 'flex', fontFamily: MONO, fontSize: size, lineHeight: 1.6, whiteSpace: 'pre' }}>
+      <span style={{ width: size * 2.4, color: T.rule, textAlign: 'right', paddingRight: size * 1.1, flexShrink: 0 }}>{i + 1}</span>
+      {runs.map(([t, c], j) =>
+        t === 'SQUIGGLE' ? (
+          <span key={j} style={{ color: T.fg, textDecoration: `underline wavy ${T.red}`, textUnderlineOffset: size * 0.28, textDecorationThickness: Math.max(1.5, size * 0.08) }}>
+            Some(<span style={{ color: T.green }}>"rs"</span>)
+          </span>
+        ) : (
+          <span key={j} style={{ color: c ?? T.fg }}>{t}</span>
+        ),
+      )}
+    </div>
+  );
+  return (
+    <div style={{ position: 'absolute', inset: 0, background: T.bg, color: T.fg, fontFamily: MONO }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 5, background: accent }} />
+      <div style={{ display: 'flex', gap: size * 1.2, alignItems: 'center', borderBottom: `1.5px solid ${T.rule}`, padding: `${size * 0.9}px ${size * 1.2}px ${size * 0.6}px`, fontSize: size * 0.8 }}>
+        <span style={{ fontWeight: 600 }}>lint/src/main.rs</span>
+        <span style={{ color: T.dim }}>lib.rs</span>
+        <span style={{ color: T.dim }}>rules.rs</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ color: T.dim }}>rust-analyzer ● 1 error</span>
+      </div>
+      <div style={{ padding: `${size * 0.8}px ${size}px` }}>{code.map(line)}</div>
+      <div style={{ position: 'absolute', left: size * 9.5, top: size * 18.4, background: '#1d1d1d', border: `2px solid ${T.fg}`, boxShadow: '8px 8px 0 #000', padding: `${size * 0.6}px ${size * 0.9}px`, fontSize: size * 0.82, lineHeight: 1.5, maxWidth: size * 30 }}>
+        <div><span style={{ color: T.red, fontWeight: 600 }}>error[E0308]</span>: mismatched types</div>
+        <div style={{ color: T.dim }}>expected <span style={{ color: T.fg }}>Option&lt;&amp;OsStr&gt;</span>, found <span style={{ color: T.fg }}>Option&lt;&amp;str&gt;</span></div>
+      </div>
+      <Mock />
+    </div>
+  );
+}

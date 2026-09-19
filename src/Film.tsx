@@ -160,7 +160,7 @@ function cropAt(name: string, beat: number) {
   for (let i = 1; i < keys.length; i++) if (beat < keys[i][0]) return lerp(keys[i - 1][1], keys[i][1], (beat - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0]));
   return keys[keys.length - 1][1];
 }
-function Render({ name, frame, bg }: { name: string; frame: number; bg: string }) {
+export function Render({ name, frame, bg }: { name: string; frame: number; bg: string }) {
   const x = cropAt(name, frame / FPB);
   return (
     <AbsoluteFill style={{ background: bg }}>

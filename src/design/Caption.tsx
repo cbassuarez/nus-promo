@@ -32,13 +32,16 @@ function parse(text: string) {
   return out;
 }
 
-export function Caption({ beat, from, until = Infinity, kicker, headline, sub, signal, ground, rate = 14, style }: CaptionProps) {
+export function Caption({ beat, from, until = Infinity, kicker, headline, sub, signal, ground, rate: base, style }: CaptionProps) {
   const { k, m, captionTop, W } = useFrame();
   if (beat < from) return null;
   const ink = ground === 'white' ? INK : WHITE;
   const dim = ground === 'white' ? DIM_ON_WHITE : DIM_ON_BLACK;
   const colour = SIGNAL[signal];
   const head = parse(headline);
+  // A headline is done within ~1.5 beats however long it is (never slower
+  // than 14 characters a beat): a four-beat section still leaves two to read.
+  const rate = base ?? Math.max(14, head.length / 1.5);
   const subChars = sub ? [...sub] : [];
   const headDone = from + head.length / rate;
   const subRate = rate * 2.2;

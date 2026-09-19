@@ -12,6 +12,16 @@ npm run mux             # re-lay audio only (ableton/bounce.wav, else the previe
 npm run render:prores   # ProRes 4444 master for Resolve
 ```
 
+**Working on this film?** Start at [`handoff/README.md`](handoff/README.md):
+the seats, the gates, and the briefs for each.
+
+```
+npm run cut             # the next cut, rough pass → out/rough/nus-cut.mp4 (with the bounce)
+npm run check           # acceptance checks (npm run check:final at G5)
+npm run rig -- new|open|check <shot>   # lighting workfiles for Light Wrangler / Photographer
+npm run markers         # Resolve timeline markers → out/resolve/markers.edl
+```
+
 **The next cut is planned in [`PLAN.md`](PLAN.md)**: the copy, the beat
 table, the type and Memphis systems, the 3D shots and the Mac reshoot
 ([`RESHOOT.md`](RESHOOT.md)). The table below is the cut that's built now.

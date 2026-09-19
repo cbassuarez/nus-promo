@@ -18,6 +18,68 @@ The copy the film puts beside your footage is decided and has to be true
 of it. So if a shot can't show what its line says, stop and report back;
 don't fake it.
 
+## The capture standard
+
+Treat the UI like a photographed product. Every clip is a choreographed
+performance of **one idea**, not a recording of someone using the app.
+The viewer never waits for the operator and never wonders where to look.
+
+- **Real product only.** No mock UI, no faked behaviour. If nus can't do
+  it on camera, it isn't in the shot, and you report back.
+- **Every clip has a shape:**
+  1. **hold**: the start state registers
+  2. **intent**: one action begins
+  3. **response**: the UI reacts
+  4. **result**: hold until the change is understood
+  5. **out**: a stable frame to cut or loop on
+
+  One strong interaction in six seconds beats five weak ones.
+- **The capture layer is nus's own recorder**, not screen capture:
+  offscreen frames at a fixed 1/60 s clock. That gives, by construction:
+  - no desktop or wallpaper
+  - no OS cursor, notifications or menu bar
+  - no dropped frames
+  - no window shadow
+  - constant geometry
+  - accurate sRGB
+
+  Screen capture (ScreenCaptureKit) is the fallback only for a surface
+  the recorder can't draw, and it's reported as such.
+- **No cursor in the master.** Where pointer position is the point (a
+  hover, a click), record the pointer's path to a sidecar
+  (`pointer.json`, logical px per frame) so a clean cursor can be added
+  downstream, or not at all.
+- **Keyboard first.** Typing is confident and readable: pause at
+  syntactic boundaries, never type boilerplate on camera, and correct a
+  mistake only if the correction shows product behaviour.
+- **The UI stays calm.** Only the product's own animation plays. All
+  camera motion, zooms, reframing, captions, callouts and cursors come
+  later, never baked into a master.
+- **Composition, checked before every take:**
+  - a clear hierarchy
+  - balanced panes
+  - legible type at laptop-render and phone size
+  - no noisy terminal history
+  - no half-lines at pane edges
+  - no scrollbar motion
+  - no truncated labels
+  - a safe margin (≥ 4 %) around anything that matters, because the
+    frame gets perspective-mapped onto a 3D screen and cropped for 9:16
+    and 4:5
+- **Takes:**
+  1. Reset to the start state.
+  2. Rehearse and verify the end state.
+  3. Reset again, then record.
+  4. Step frame by frame around every transition.
+  5. Retake on any of these:
+     - a hitch or unexpected load
+     - layout movement or a stray hover
+     - rushed typing or a mistimed change
+     - stale content
+
+  Keep two clean takes of the important shots. Don't accept the first
+  take that merely works.
+
 ## 0 · Build and measure
 
 1. Build the release app on this Mac and run the test suite. Note
@@ -227,6 +289,21 @@ telemetry.*
   it isn't CEF)
 - hold to 2.6
 
+### 10 · `hero-idle`: no beat · record 10 s
+A beautiful, stable nus state for the laptop's screen in the open and
+outro, and for the website.
+- The split: `web` shell idle at the prompt in `~/dev/acme-web` beside
+  `localhost:5173`.
+- The only motion allowed is the product's own: a watch lamp, a clock
+  that really ticks. No caret blink.
+- The first and last frames must match, so it loops.
+
+### 11 · `loop`: no beat · record 6 s
+For the website: a single interaction whose end state is its start state.
+- The palette opens (`palette go`), `type git lo 10`, the selection moves
+  twice, then it closes (`close`).
+- The last frame equals the first.
+
 ### Stills and layers
 - Every still in `docs/media/` again, at 2× (3200×2000), same names, in
   the new staging, `-ink` and `-paper`. They back up any clip.
@@ -235,24 +312,50 @@ telemetry.*
 
 ## 4 · Deliver
 
-One zip, `nus-promo-reshoot-mac-<yyyy-mm-dd>.zip`:
+**Names.** `NUS_<SHOT>_<NN>` (take number), e.g. `NUS_SHELL_MIN_01`,
+`NUS_AGENT_PAGE_02`. For each approved take:
 
 ```
-footage/<name>.mp4             (the ten recordings above)
-footage/<name>/f00000.png …    (the PNG sequences, masters)
-footage/*.marks.json
-shots/*.png                    (2× stills, docs/media names)
-internals/compositor.png  native-ui.png  terminal.png  chromium.png  atlas.png  marks.json
-LATENCY.md                     (method, median, p95, refresh rate, build)
-README.md                      (nus commit, macOS version, the scripts, anything off-spec)
+footage/NUS_<SHOT>_<NN>_MASTER.mov    ProRes 4444, 3200×2000, 60 fps, sRGB (from the PNG sequence)
+footage/NUS_<SHOT>_<NN>/f00000.png …  the PNG sequence, the true master
+footage/NUS_<SHOT>_<NN>_WEB.mp4       H.264 CRF 18, 1600×1000, for the web
+footage/NUS_<SHOT>_<NN>_THUMB.png     one representative frame
+footage/NUS_<SHOT>_<NN>.json          metadata (below)
+footage/NUS_<SHOT>_<NN>.marks.json    element rectangles, where the shot asks for marks
+footage/NUS_<SHOT>_<NN>.pointer.json  the pointer path, where the shot has one
 ```
 
-Before zipping, check that:
-- every clip is 3200×2000, 60 fps, and the right length
+Also `footage/<shot>.mp4` (H.264, CRF 10), a copy of each shot's chosen
+take under the short name the film's pipeline reads (`npm run footage`).
+
+**Metadata** (`.json`), one per take:
+
+```json
+{
+  "shot": "shell-min", "take": 1, "film_beat": 4,
+  "nus_commit": "<sha>", "macos": "<version>", "machine": "<model>",
+  "window_logical": [1600, 1000], "capture": [3200, 2000], "fps": 60,
+  "frames": 252, "duration_s": 4.2,
+  "start_state": "…", "end_state": "…", "interaction": "…",
+  "events": [{ "t": 1.579, "step": "type git ch 10" }],
+  "cursor": false, "crop": null, "notes": "…"
+}
+```
+
+**Also:** `shots/*.png` (2× stills), `internals/*` (layers, atlas,
+marks), `LATENCY.md`, and a **`MANIFEST.md`**: one line per approved shot
+saying what it communicates and where it's best used (film beat, website,
+social). Before you finish, review every approved shot together and retake
+any whose pacing, type, content or hierarchy is weaker than the rest.
+
+One zip, `nus-promo-reshoot-mac-<yyyy-mm-dd>.zip`. Before zipping, check
+that:
+- every master is 3200×2000, 60 fps, the listed length, with its
+  metadata
 - every listed event lands on its frame (frame = seconds × 60)
 - no username, hostname, email, token, private repo or unrelated process
   appears in any frame
 - the Issues click in shot 2 went only to the public repo
 
-On the recording Mac: unzip into `nus-promo/public/`, then run
-`npm run footage && sh blender/render.sh && npm run render`.
+On the Mac: unzip into `nus-promo/public/`, then run `npm run footage &&
+npm run check`, and the rough pass picks the footage up.

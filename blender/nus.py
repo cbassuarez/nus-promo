@@ -1005,7 +1005,9 @@ def light_product_only():
     """Rims and sweeps light the machine, never the set: Cycles light linking,
     the product shoot's flags and cutters. The set takes the HDRI and the key."""
     set_names = ("Cyclorama", "Haze", "Floor")
-    rig_names = ("Softbox", "Flag", "Set light")
+    rig_names = RIG_NAMES
+    rig_col = bpy.data.collections.get("Rig")
+    rig_objs = set(rig_col.all_objects) if rig_col else set()
     product = bpy.data.collections.new("Product")
     bpy.context.scene.collection.children.link(product)
     stage_set = bpy.data.collections.new("Set")
@@ -1014,15 +1016,18 @@ def light_product_only():
     # the set light that drives the cyc to white — only the sun and the fill,
     # at an exposure where the signals keep their colour.
     dressing = bpy.data.collections.get("Memphis")
-    for ob in bpy.data.objects:
-        if dressing and ob.name in dressing.objects:
+    for ob in bpy.context.scene.objects:
+        if (dressing and ob.name in dressing.objects) or ob in rig_objs:
             continue
         elif ob.type in ("MESH", "FONT", "CURVE") and not ob.name.startswith(set_names + rig_names):
             product.objects.link(ob)
         elif ob.name.startswith(set_names):
             stage_set.objects.link(ob)
-    for ob in bpy.data.objects:
-        if ob.name.startswith(("Rim", "Sweep", "Softbox")):
+    for ob in bpy.context.scene.objects:
+        if ob in rig_objs:
+            link = ob.get("nus_link") or ("set" if ob.name.startswith("Set light") else "product")
+            ob.light_linking.receiver_collection = {"set": stage_set, "product": product}.get(link)
+        elif ob.name.startswith(("Rim", "Sweep", "Softbox")):
             ob.light_linking.receiver_collection = product
         elif ob.name.startswith("Set light"):
             ob.light_linking.receiver_collection = stage_set
@@ -1097,7 +1102,49 @@ def flag(name, loc, size, look=(0, 0, 0.08)):
     return ob
 
 
+RIGS = os.environ.get("NUS_RIGS", os.path.join(ROOT, "blender", "rigs"))
+SHOT = None  # set by main(): which shot's rig file to look for
+RIG_NAMES = ("Softbox", "Flag", "Set light")
+
+
+def rig_path(shot=None):
+    return os.path.join(RIGS, f"{shot or SHOT}.blend")
+
+
+def append_rig(path):
+    """The user's light, blocked by hand (Light Wrangler, Photographer) in a
+    rig workfile, replaces the scripted stage: every object in its `Rig`
+    collection comes in as it was left. Lights, emitters and flags light the
+    product only, unless an object carries a custom property
+    `nus_link` = "set" (the cyc only) or "all" (everything), or its name
+    starts with "Set light". Light Wrangler's node groups and textures come
+    with it, so the add-on needn't be loaded to render."""
+    with bpy.data.libraries.load(path, link=False) as (src, dst):
+        dst.collections = [c for c in src.collections if c == "Rig"]
+    if not dst.collections:
+        raise SystemExit(f"{path}: no collection named Rig")
+    rig = dst.collections[0]
+    bpy.context.scene.collection.children.link(rig)
+    # Anything that rode in with the rig but isn't in it (collections its
+    # light linking pointed at, and their objects) goes: the scene is ours.
+    keep = set(rig.all_objects)
+    for ob in list(bpy.data.objects):
+        if ob.library is None and ob not in keep and not ob.users_scene:
+            bpy.data.objects.remove(ob)
+    for ob in keep:
+        ob.light_linking.receiver_collection = None
+        ob.light_linking.blocker_collection = None
+    print(f"RIG {os.path.relpath(path, ROOT)}: {len(rig.all_objects)} objects", flush=True)
+    return rig
+
+
 def stage(tone):
+    if SHOT and os.path.exists(rig_path()):
+        return append_rig(rig_path())
+    return scripted_stage(tone)
+
+
+def scripted_stage(tone):
     """Light for a product, not a scene. The machine sees a top softbox and
     two feathered strips (edge light on the chamfers), a long gradient bar
     above the camera (the diagonal sheen on the glass), and black flags
@@ -1234,8 +1281,11 @@ def setup(opt, factory=True):
 
 
 def main():
-    opt = args({"shot": "open", "engine": "cycles", "samples": 64, "scale": 200, "frames": None, "laptop": "ours"})
+    global SHOT
+    opt = args({"shot": "open", "engine": "cycles", "samples": 64, "scale": 200, "frames": None,
+                "laptop": "apple" if os.path.exists(APPLE) else "ours"})
     shot = opt["shot"]
+    SHOT = None if opt.get("rig-out") or opt.get("no-rig") else shot
     sc = setup(opt)
 
     materials()
@@ -1250,12 +1300,51 @@ def main():
     if opt["frames"]:
         a, b = (int(x) for x in opt["frames"].split(":"))
     sc.frame_start, sc.frame_end = a, b
+    if opt.get("exr"):
+        # Plates for Resolve: multilayer half-float EXR, scene-linear, with
+        # Cryptomatte (object, material) for mattes and power windows. The
+        # composite (lens pass, ground) rides along as the Composite layer.
+        img = sc.render.image_settings
+        img.file_format = "OPEN_EXR_MULTILAYER"
+        img.color_depth = "16"
+        img.exr_codec = "DWAA"
+        vl = bpy.context.view_layer
+        vl.use_pass_cryptomatte_object = True
+        vl.use_pass_cryptomatte_material = True
+        vl.pass_cryptomatte_depth = 4
     out = opt.get("out") or os.path.join(ROOT, "public", "renders", shot)
     os.makedirs(out, exist_ok=True)
     sc.render.filepath = os.path.join(out, "f")
+    if opt.get("rig-out"):
+        return write_rig(shot, sc, force=opt.get("force") == "1")
     if opt.get("save"):
         bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT, "blender", f"{shot}.blend"))
     bpy.ops.render.render(animation=True)
+
+
+def write_rig(shot, sc, force=False):
+    """A lighting workfile for a shot: the whole scene, animated, with the
+    scripted stage (softboxes, flags, set light) gathered into a `Rig`
+    collection. Light it by hand, keep your lights in `Rig`, save in place;
+    renders then use it instead of the scripted stage. Never overwritten
+    unless --force 1 — it's the user's work. Local only: it holds the
+    Apple model."""
+    path = rig_path(shot)
+    if os.path.exists(path) and not force:
+        raise SystemExit(f"{path} exists — it's the user's; --force 1 to replace it")
+    rig = bpy.data.collections.new("Rig")
+    sc.collection.children.link(rig)
+    for ob in list(bpy.data.objects):
+        if ob.name.startswith(RIG_NAMES):
+            for c in list(ob.users_collection):
+                c.objects.unlink(ob)
+            rig.objects.link(ob)  # its linking stays, so the viewport shows the render's light
+    # Open on the shot's key moment, in the rendered viewport, through its camera.
+    a, b = frames(shot)
+    sc.frame_current = {"open": a + round(3 * FPB), "outro": a + round(4 * FPB)}.get(shot, (a + b) // 2)
+    os.makedirs(RIGS, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=path)
+    print(f"RIG written {os.path.relpath(path, ROOT)}: {len(rig.objects)} objects in Rig", flush=True)
 
 
 if __name__ == "__main__":

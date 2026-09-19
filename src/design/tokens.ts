@@ -26,6 +26,7 @@ export const SECTIONS = {
   language: { signal: 'teal', ground: 'white' },
   held: { signal: 'green', ground: 'white' },
   ide: { signal: 'blue', ground: 'black' },
+  editor: { signal: 'blue', ground: 'white' },
   yours: { signal: 'red', ground: 'white' },
   private: { signal: 'red', ground: 'black' },
   end: { signal: 'red', ground: 'black' },

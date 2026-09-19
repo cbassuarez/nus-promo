@@ -1,0 +1,24 @@
+{
+  "sections": [
+    { "name": "open", "from": 0, "to": 8, "label": "Open" },
+    { "name": "language", "from": 8, "to": 12, "label": "Language" },
+    { "name": "ports", "from": 12, "to": 20, "label": "Dev tools · ports" },
+    { "name": "held", "from": 20, "to": 24, "label": "Dev tools · held" },
+    { "name": "macro", "from": 24, "to": 25, "label": "Fast · macro" },
+    { "name": "number", "from": 25, "to": 28, "label": "Fast · 2.8 ms" },
+    { "name": "ide", "from": 28, "to": 38, "label": "Architecture · internals" },
+    { "name": "editor", "from": 38, "to": 44, "label": "Architecture · editor" },
+    { "name": "agents", "from": 44, "to": 52, "label": "Agents" },
+    { "name": "yours", "from": 52, "to": 56, "label": "Customizable" },
+    { "name": "home", "from": 56, "to": 60, "label": "Home" },
+    { "name": "private", "from": 60, "to": 64, "label": "Private" },
+    { "name": "end", "from": 64, "to": 76, "label": "End card" }
+  ],
+  "transitions": [
+    { "from": 11.5, "to": 12.5, "kind": "shutter", "a": "language", "b": "ports" },
+    { "from": 19.5, "to": 20.5, "kind": "band", "a": "ports", "b": "held" },
+    { "from": 28, "to": 29, "kind": "cells", "a": "number", "b": "ide" },
+    { "from": 43, "to": 44, "kind": "band", "a": "editor", "b": "agents" },
+    { "from": 52, "to": 53, "kind": "cells", "a": "agents", "b": "yours" }
+  ]
+}

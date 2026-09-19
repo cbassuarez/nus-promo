@@ -15,7 +15,12 @@
     "still": "remotion still Object",
     "footage": "node scripts/footage.mjs",
     "blender": "sh blender/render.sh",
-    "hdri": "node scripts/hdri.mjs"
+    "hdri": "node scripts/hdri.mjs",
+    "cut": "remotion render Cut out/rough/cut-picture.mp4 --codec h264 --crf 16 && ffmpeg -loglevel error -y -i out/rough/cut-picture.mp4 -i ableton/bounce.wav -filter_complex \"[1:a]volume=-1.5dB,apad[a]\" -map 0:v -map \"[a]\" -c:v copy -c:a aac -b:a 320k -t 30.0 out/rough/nus-cut.mp4",
+    "check": ".venv/bin/python tools/check.py",
+    "check:final": ".venv/bin/python tools/check.py --final",
+    "markers": "mkdir -p out/resolve && node scripts/markers.mjs > out/resolve/markers.edl",
+    "rig": "sh blender/rig.sh"
   },
   "dependencies": {
     "@remotion/cli": "4.0.526",
