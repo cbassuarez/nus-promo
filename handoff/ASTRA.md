@@ -23,7 +23,7 @@ of this is in the public repo:
 - the Apple MacBook Pro USDZ stand-in (`assets/models/`) — **never
   commit or upload it, or any render of it, anywhere public**
 - the Poly Haven HDRIs (`assets/hdri/`; `npm run hdri` refetches)
-- Seb's rig workfiles (`blender/rigs/<shot>.blend`), lit by hand
+- Seb's rig workfiles (`blender/rigs/<shot>.blend`), where he's hand-lit a shot; the others are lit by the script (`DESIGNS`)
 - the recordings from the Mac reshoot (`public/footage/`,
   `public/internals/`)
 - the score, `ableton/bounce.wav` (Seb's Live set export)
@@ -47,8 +47,14 @@ of this is in the public repo:
 
 ## Yours to push
 
-- **Light and lens** within stage 2 (`PLAN.md` §4): every `LOOK` value
-  (`NUS_<KEY>`), the rigs, camera paths and lenses, DOF, the lens pass.
+- **Light and lens** within stage 2 (`PLAN.md` §4):
+  - every `LOOK` value (`NUS_<KEY>`)
+  - the per-shot highlight designs (`DESIGNS` in `nus.py`: `highlight()`
+    places a softbox by reflection so its highlight lands on a named point,
+    re-aimed per frame)
+  - the rigs
+  - camera paths and lenses, DOF, the lens pass
+
   Aim for a photographed product, not a render.
 - **Composites in Remotion:**
   - transitions within their beat windows
@@ -75,7 +81,7 @@ of this is in the public repo:
      key frame at 4K.
    - Use `blender -b --factory-startup -P blender/nus.py -- --shot <s> --frames <f>:<f> --scale 200`.
      The rig is picked up automatically.
-   - Then `sh blender/rig.sh check <shot>` (add-ons off, rig vs scripted).
+   - Where a rig exists, run `sh blender/rig.sh check <shot>` (add-ons off, rig vs scripted).
    - Present them as a contact sheet (`tools/contact.py`) with the
      settings used.
 3. **Final 3D:** `sh blender/render.sh 128 200`, or per shot with your
@@ -83,7 +89,7 @@ of this is in the public repo:
    Also write the EXR passes (`--exr 1`) for Resolve.
 4. **Picture:** render `Cut`, `CutVertical` and `CutFeed` as in
    `handoff/RESOLVE.md` (4K for 16:9, `--scale 2`).
-5. **Check:** `python3 tools/check.py --final` must pass: no licensed
+5. **Check:** `npm run check:final` must pass: no licensed
    files tracked, every frame present at size, no missing-texture frames,
    durations and frame counts exact, audio sync.
 6. **Package** for Resolve exactly as `handoff/RESOLVE.md` lays out.
@@ -96,7 +102,7 @@ of this is in the public repo:
 - Captions are legible in all three formats at phone size, and nothing
   covers UI or type.
 - No missing-texture magenta and no fireflies; the motion blur reads.
-- `tools/check.py --final` passes.
+- `npm run check:final` passes.
 
 ## Report back
 

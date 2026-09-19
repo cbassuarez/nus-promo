@@ -578,6 +578,17 @@ def hdri_world(name, strength, rotation=0.0, camera=(1, 1, 1)):
     nt.links.new(mapping.outputs["Vector"], env.inputs["Vector"])
     nt.links.new(env.outputs["Color"], bg.inputs["Color"])
     bg.inputs["Strength"].default_value = strength
+    if STAGE >= 2:
+        # In stage 2 the studio is fill, not key (the softboxes and the set
+        # light do the lighting), so its lamps are clamped for every ray: its
+        # hot spot can't burn a disc into the glass. (By ray type isn't
+        # enough: Cycles samples the world as a light, and those samples
+        # don't carry "glossy".)
+        clamp = nt.nodes.new("ShaderNodeVectorMath")
+        clamp.operation = "MINIMUM"
+        clamp.inputs[1].default_value = (LOOK["hdri_clamp"],) * 3
+        nt.links.new(env.outputs["Color"], clamp.inputs[0])
+        nt.links.new(clamp.outputs[0], bg.inputs["Color"])
     flat = nt.nodes.new("ShaderNodeBackground")
     flat.inputs["Color"].default_value = (*camera, 1)
     path_ = nt.nodes.new("ShaderNodeLightPath")
@@ -751,7 +762,7 @@ OPEN_DEG = 112
 LOOK = {"white_hdri": 0.15, "white_key": 20, "white_rims": 160, "white_cyc": 0.86, "black_hdri": 0.12, "black_rough": 0.3, "black_spec": 0.3,
         # Stage 2 (NUS_STAGE=2, the default): the product-photography stage.
         "exposure": 0.0, "screen_nits": 1.5, "screen_coat": 0.03, "set_light": 1.0, "softbox": 1.0, "bloom": 1.0, "dispersion": 0.004,
-        "metal_rough": 0.55, "bead": 1.0}
+        "metal_rough": 0.55, "bead": 1.0, "hdri_clamp": 2.0}
 LOOK = {k: float(os.environ.get("NUS_" + k.upper(), v)) for k, v in LOOK.items()}
 # Stage 1 is the first look (Standard view, area rims, the HDRI in every
 # reflection); stage 2 lights like a product shoot: Khronos PBR Neutral
@@ -1023,10 +1034,18 @@ def light_product_only():
             product.objects.link(ob)
         elif ob.name.startswith(set_names):
             stage_set.objects.link(ob)
+    # The metal alone: the product less its glass and screens. Highlights and
+    # sweeps light this, so their reflections sit on edges, never on the display.
+    metal = bpy.data.collections.new("Product metal")
+    for ob in product.objects:
+        if not ob.name.startswith(GLASS_NAMES):
+            metal.objects.link(ob)
     for ob in bpy.context.scene.objects:
-        if ob in rig_objs:
+        if ob.get("nus_metal") or ob.name.startswith("Sweep"):
+            ob.light_linking.receiver_collection = metal
+        elif ob in rig_objs:
             link = ob.get("nus_link") or ("set" if ob.name.startswith("Set light") else "product")
-            ob.light_linking.receiver_collection = {"set": stage_set, "product": product}.get(link)
+            ob.light_linking.receiver_collection = {"set": stage_set, "product": product, "metal": metal}.get(link)
         elif ob.name.startswith(("Rim", "Sweep", "Softbox")):
             ob.light_linking.receiver_collection = product
         elif ob.name.startswith("Set light"):
@@ -1178,6 +1197,169 @@ def scripted_stage(tone):
         aim(fo, (0, 1.2, 0.8))
 
 
+# ── Stage 2: highlights placed by reflection ───────────────────────────────────
+# Light Wrangler's interactive mode, as geometry: name a point on the machine,
+# cast the camera's ray at it, mirror the ray about the surface normal, and put
+# a feathered softbox along the mirrored ray, facing the point. Its reflection
+# then sits exactly there. Re-aimed on every frame given, so a highlight stays
+# on its edge while the camera moves.
+GLASS_NAMES = ("Panel", APPLE_GLASS, APPLE_SCREEN)
+
+
+def _cast(sc, origin, target, metal=True):
+    """First product surface on the ray from `origin` through `target`
+    (softboxes, flags and the set don't count; with `metal`, nor the glass)."""
+    dg = bpy.context.evaluated_depsgraph_get()
+    d = (Vector(target) - origin).normalized()
+    o = origin.copy()
+    for _ in range(12):
+        hit, loc, normal, _i, ob, _m = sc.ray_cast(dg, o, d)
+        if not hit:
+            return None
+        if ob.name.startswith(RIG_NAMES + ("Cyclorama", "Haze", "Floor")) or not ob.visible_camera or (metal and ob.name.startswith(GLASS_NAMES)):
+            o = loc + d * 1e-4
+            continue
+        n = normal if normal.dot(d) < 0 else -normal
+        return loc, n.normalized(), d
+    return None
+
+
+def highlight(name, targets, size=(0.6, 0.1), strength=40.0, distance=1.1, along=(1, 0, 0), feather=0.45, metal=True):
+    """A softbox whose reflection lands on `targets`: {frame: world point on
+    the machine}. One entry places it once; several animate it (linear), so the
+    highlight holds its place — or travels, for a glint — as camera and lid
+    move. `along`: the direction the softbox's long side runs, usually the edge
+    it lights."""
+    sc = bpy.context.scene
+    cam = sc.camera
+    ob = softbox(f"Softbox {name}", (0, 0, 0), size, strength, look=(0, 0, 1), feather=feather)
+    if metal:
+        ob["nus_metal"] = 1  # lights the aluminium, never the glass: no stray bar across the screen
+    placed = 0
+    for frame, target in sorted(targets.items()):
+        sc.frame_set(frame)
+        if callable(target):  # a target that depends on where things are at this frame
+            target = target()
+        hit = _cast(sc, cam.matrix_world.translation, target, metal)
+        if not hit:
+            print(f"HIGHLIGHT {name}: frame {frame}: nothing at {tuple(round(x, 3) for x in target)}", flush=True)
+            continue
+        p, n, v = hit
+        r = v - 2 * v.dot(n) * n
+        ob.location = p + r * distance
+        z = (p - ob.location).normalized()  # the panel's emitting face (+Z) looks at the point
+        x = Vector(along) - z * Vector(along).dot(z)
+        if x.length < 1e-4:
+            x = z.orthogonal()
+        x.normalize()
+        from mathutils import Matrix
+        ob.rotation_euler = Matrix((x, z.cross(x), z)).transposed().to_euler()
+        if len(targets) > 1:
+            ob.keyframe_insert("location", frame=frame)
+            ob.keyframe_insert("rotation_euler", frame=frame)
+        placed += 1
+    if ob.animation_data and ob.animation_data.action:
+        for fc in ob.animation_data.action.fcurves:
+            for kp in fc.keyframe_points:
+                kp.interpolation = "LINEAR"
+    print(f"HIGHLIGHT {name}: placed on {placed}/{len(targets)} frames", flush=True)
+    return ob
+
+
+def lid_points(rig):
+    """The lid's vertices in world space, as they are at the current frame."""
+    import numpy as np
+    bpy.context.view_layer.update()
+    meshes = [o for o in rig["lid"].children_recursive if o.type == "MESH" and not o.hide_render and not o.name.startswith(GLASS_NAMES)]
+    pts = []
+    for o in meshes:
+        m = np.array(o.matrix_world)
+        co = np.empty(len(o.data.vertices) * 3)
+        o.data.vertices.foreach_get("co", co)
+        co = co.reshape(-1, 3)
+        pts.append(co @ m[:3, :3].T + m[:3, 3])
+    return np.concatenate(pts)
+
+
+def lid_edge(rig):
+    """The middle of the lid's far edge (the one away from the hinge), now."""
+    import numpy as np
+    _, n, up = lid_frame(rig)
+    p = lid_points(rig)
+    d = p @ np.array(up)
+    near = p[d > d.max() - 0.0015]
+    c = near.mean(axis=0)
+    return Vector((0.0, c[1], c[2]))
+
+
+def lid_back(rig, t, across=0.0):
+    """A point on the lid's outside (the aluminium face), `t` 0→1 from its
+    left to its right edge, `across` −0.5…0.5 from hinge to far edge."""
+    import numpy as np
+    _, n, up = lid_frame(rig)
+    p = lid_points(rig)
+    back = p[p @ np.array(n) < (p @ np.array(n)).min() + 0.002]  # the face that looks away from the glass
+    lo, hi = back.min(axis=0), back.max(axis=0)
+    c = back.mean(axis=0)
+    ext = back @ np.array(up)
+    return Vector((lo[0] + (hi[0] - lo[0]) * (0.1 + 0.8 * t), c[1], c[2])) + up * (across * (ext.max() - ext.min()) * 0.8)
+
+
+def lid_frame(rig):
+    """The open lid's centre, its facing and its up (along the lid, away from
+    the hinge), for aiming at its edges."""
+    centre, n = screen_world(rig)
+    up = Vector((0, n.z, -n.y)) if n.z <= 0 else Vector((0, -n.z, n.y))
+    if up.z < 0:
+        up = -up
+    return centre, n, up
+
+
+def design_open(rig):
+    """The open, white: the machine's shape drawn in three highlights that hold
+    their place as the camera drifts in — a line along the lid's top edge, the
+    long chamfer of the base's front, and a soft sheen down the left side of
+    the deck. The scripted edge strips go; the top box, flags and set stay."""
+    for n_ in ("Softbox left", "Softbox right", "Softbox back"):
+        ob = bpy.data.objects.get(n_)
+        if ob:
+            bpy.data.objects.remove(ob)
+    frames = {round(b * FPB): None for b in (3, 4.5, 6, 7.5)}
+    highlight("lid edge", {f: (lambda: lid_edge(rig)) for f in frames}, size=(0.9, 0.05), strength=70, distance=1.2, along=(1, 0, 0), feather=0.4)
+    front = Vector((0.0, -0.112, 0.012))  # the base's front edge, the chamfer the thumb rests on
+    highlight("front chamfer", {f: front for f in frames}, size=(1.0, 0.06), strength=45, distance=1.2, along=(1, 0, 0), feather=0.45)
+    deck = Vector((-0.09, -0.06, 0.0158))  # the palm rest, left of the trackpad
+    highlight("deck sheen", {f: deck for f in frames}, size=(0.55, 0.9), strength=9, distance=1.4, along=(0, 1, 0), feather=0.5)
+
+
+def design_outro(rig):
+    """The outro, black: a rim that traces the lid's top edge while it's open
+    (56–60), then, the lid shut, one glint that travels across it (60.5–63.5),
+    front-left to back-right, and is gone. It replaces the scripted sweeps."""
+    for ob in [o for o in bpy.data.objects if o.name.startswith("Sweep")]:
+        bpy.data.objects.remove(ob)
+    highlight("rim", {round(b * FPB): (lambda: lid_edge(rig)) for b in (56, 57.5, 59)}, size=(1.0, 0.05), strength=60, distance=1.2, along=(1, 0, 0), feather=0.4)
+    rim = bpy.data.objects["Softbox rim"]
+    mat = rim.data.materials[0].node_tree.nodes
+    level = next(nd for nd in mat if nd.type == "MATH" and nd.operation == "MULTIPLY" and not nd.inputs[1].is_linked)
+    for beat, v in ((55.9, 0.0), (56.4, level.inputs[1].default_value), (59.6, level.inputs[1].default_value), (60.2, 0.0)):
+        level.inputs[1].default_value = v
+        level.inputs[1].keyframe_insert("default_value", frame=round(beat * FPB))
+    # The glint rides the lid's outside as it closes: left to right, a narrow
+    # line, catching the shut lid's last moment.
+    path = {round((60.5 + 3.0 * t) * FPB): (lambda t=t: lid_back(rig, t, 0.1 - 0.2 * t)) for t in (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)}
+    glint = highlight("glint", path, size=(0.035, 1.2), strength=34, distance=1.3, along=(0.3, 1, 0), feather=0.3)
+    gm = glint.data.materials[0].node_tree.nodes
+    glevel = next(nd for nd in gm if nd.type == "MATH" and nd.operation == "MULTIPLY" and not nd.inputs[1].is_linked)
+    peak = glevel.inputs[1].default_value
+    for beat, v in ((60.4, 0.0), (61.0, peak), (63.0, peak), (63.6, 0.0)):
+        glevel.inputs[1].default_value = v
+        glevel.inputs[1].keyframe_insert("default_value", frame=round(beat * FPB))
+
+
+DESIGNS = {"open": design_open, "outro": design_outro}
+
+
 def lens():
     """The lens pass, in the compositor: a faint bloom on what's hot (the
     screen's whites, the glints), a touch of lateral dispersion at the
@@ -1291,10 +1473,15 @@ def main():
     materials()
     rig = apple_laptop() if opt["laptop"] == "apple" else laptop()
     {"open": shot_open, "macro": shot_macro, "internals": shot_internals, "outro": shot_outro}[shot](rig)
+    finish_keys()
+    if STAGE >= 2 and SHOT and os.path.exists(rig_path()):
+        for ob in [o for o in bpy.data.objects if o.name.startswith("Sweep")]:
+            bpy.data.objects.remove(ob)  # a rig owns all the light, the glints included
+    elif STAGE >= 2 and shot in DESIGNS:
+        DESIGNS[shot](rig)  # after the camera and lid are keyed: highlights aim through them
     light_product_only()
     if STAGE >= 2:
         lens()
-    finish_keys()
 
     a, b = frames(shot)
     if opt["frames"]:

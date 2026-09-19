@@ -78,7 +78,10 @@ Transitions sit on hits already in the score:
   - light: feathered softboxes and black flags for the product; a set
     light for the cyc
   - lens: a light pass
-  - Each shot's lighting can come from a hand-lit rig file.
+  - highlights placed by reflection, so each lands on a named edge and
+    holds it as the camera moves; they light the metal only, never the
+    glass
+  - a hand-lit rig file can replace a shot's scripted light
 
 ## Non-negotiables
 
@@ -94,7 +97,7 @@ Transitions sit on hits already in the score:
 | Path | Is |
 |---|---|
 | `PLAN.md` | the decisions |
-| `RESHOOT.md` | the capture standard and the ten recordings |
+| `RESHOOT.md` | the capture standard and the twelve recordings |
 | `src/Cut.tsx` | the next cut (compositions `Cut`, `CutVertical`, `CutFeed`) |
 | `src/Styleframes.tsx`, `src/design/` | the sections, type, Memphis kit, wordmark, mocks |
 | `blender/nus.py` | the 3D shots and the stage-2 look (`LOOK`, every value overridable as `NUS_<KEY>`) |

@@ -180,6 +180,39 @@ comparison (`out/mocks/contact-stage.png`).
   `screen_coat`, `set_light`, `softbox`, `bloom`, `dispersion`,
   `metal_rough`, `bead`, or `NUS_VIEW` for another transform.
 
+### Highlights placed by reflection (decided, 2026-09-18)
+
+Light Wrangler's interactive mode, as code (`highlight()` in `nus.py`):
+1. Name a point on the machine.
+2. Cast the camera's ray at it and mirror the ray about the surface
+   normal.
+3. Place a feathered softbox along the mirrored ray, facing the point.
+
+It re-aims on every frame given, so a highlight holds its edge as camera
+and lid move, or travels, for a glint. Highlights light the **metal only**
+(the `Product metal` link), so they never streak the screen. Per-shot
+designs (`DESIGNS`):
+
+- **open:**
+  - a line along the lid's top edge
+  - the front chamfer
+  - a sheen down the palm rest
+
+  These replace the scripted edge strips.
+- **outro:**
+  - a rim on the lid's edge while it's open (56–60)
+  - a narrow glint riding the lid's outside as it closes (60.5–63.5)
+
+  These replace the old sweeps.
+
+The studio HDRI is fill in stage 2, and its lamps are clamped
+(`hdri_clamp`) so they can't burn a disc into the glass.
+
+**Rig files are the hand-tweak path, not the default.**
+`npm run rig -- new <shot>` writes the scripted light (designs included)
+into a workfile. Light it by hand, and renders use it instead. Seb's call
+at G2.
+
 ### Add-ons (decided)
 
 - **Photographer** (the installed, patched repack) is optional. Its
@@ -259,6 +292,7 @@ npm run render                                   # footage → score → picture
   - softboxes and flags
   - lens pass
 - [x] Rig workfiles (`blender/rig.sh new|open|check`), with `Rig` appended at render time
+- [x] Highlights by reflection: `highlight()`, and designs for the open and the outro
 - [x] G1 rough pass v0: `Cut` on `src/cut.json` → `out/rough/nus-rough-v0.mp4`
 - [x] The roundtable: `handoff/`, with RESHOOT.md folding in the capture standard
 - [x] `tools/check.py` (`npm run check`, `npm run check:final`), the Resolve markers EDL, and EXR plates (`--exr 1`)

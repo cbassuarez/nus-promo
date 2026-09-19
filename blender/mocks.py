@@ -27,6 +27,19 @@ INK = "#141414"
 PAPER = "#f4f1ea"
 
 
+# ── The user's add-ons ────────────────────────────────────────────────────────
+def quiet_addons():
+    """Mocks load the user's add-ons (for Photographer), but not every add-on
+    behaves headless: Cinepack's handlers raise on every file load and scene
+    update. Unhook them for this session only; the install is untouched."""
+    for name in dir(bpy.app.handlers):
+        hs = getattr(bpy.app.handlers, name)
+        if isinstance(hs, list):
+            for f in list(hs):
+                if "cinepack" in (getattr(f, "__module__", "") or "").lower():
+                    hs.remove(f)
+
+
 # ── Photographer, where it's installed ────────────────────────────────────────
 def photographer(cam, focal=None, aperture=None, ev=None):
     """Drive the camera through Photographer's physical controls (focal,
@@ -394,7 +407,9 @@ def main():
     names = list(MOCKS) if opt["mock"] == "all" else opt["mock"].split(",")
     os.makedirs(OUT, exist_ok=True)
     for name in names:
+        quiet_addons()
         sc = nus.setup(opt, factory=False)
+        quiet_addons()
         LOOK.update(BASE_LOOK)
         sc.render.use_motion_blur = False
         nus.MAT.clear()

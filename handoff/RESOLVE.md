@@ -48,7 +48,7 @@ npx remotion render CutFeed    out/resolve/picture/NUS_4x5_PICTURE.mov  --codec 
 blender -b --factory-startup -P blender/nus.py -- --shot <shot> --exr 1 --out out/resolve/plates/<shot>
 node scripts/markers.mjs > out/resolve/markers.edl
 cp ableton/bounce.wav ableton/film-sync.mid out/resolve/audio/
-python3 tools/check.py --final
+npm run check:final
 ```
 
 ## Later, not now

@@ -7,7 +7,7 @@ first.
 
 | Seat | Role | Owns | Never |
 |---|---|---|---|
-| **Seb** | Director | Taste; the approval at every gate; lighting by hand (Light Wrangler, Photographer); the finish in Resolve; the score (the Live set) | — |
+| **Seb** | Director | Taste; the approval at every gate; hand-tweaks to light when he wants them (rig files, Light Wrangler); the finish in Resolve; the score (the Live set) | — |
 | **GPT Pro** | Prompt editor | Turning a brief in this folder into the sharpest prompt for an agent; critiquing prompts against `CONTEXT.md` | Invents features, claims, beats or file paths; its prompts run only after Claude checks them against the repo |
 | **Claude Code** | Scaffolding, direction, rough pass | The repo and pipeline; the rough cut (`Cut`); the Mac reshoot (it drives nus); the acceptance checks; verifying every prompt before it runs | Final look decisions (proposes; Seb decides) |
 | **Astra** | Final execution and look | The 4K renders; polishing light, camera and compositing within the locks; the three formats; the Resolve package | Changes copy, beats, claims or the score; overwrites Seb's rig files; publishes Apple assets |
@@ -17,7 +17,7 @@ first.
 ```mermaid
 flowchart LR
   G0[G0 Direction lock<br/>PLAN.md ✓] --> G1[G1 Rough pass v0<br/>Claude ✓]
-  G1 --> G2[G2 Look lock<br/>Seb lights rigs · Astra look-dev stills]
+  G1 --> G2[G2 Look lock<br/>scripted light · Astra stills · Seb approves]
   G1 --> G3[G3 Capture<br/>Claude drives nus on the Mac]
   G3 --> G4[G4 Picture lock<br/>rough pass v1 on real footage]
   G2 --> G5[G5 Final<br/>Astra: 4K, polish, formats, Resolve package]
@@ -29,8 +29,8 @@ flowchart LR
 |---|---|---|---|
 | **G0 Direction** ✓ | Claude + Seb | `PLAN.md`: copy, beat table, type, Memphis kit, 3D shot plan | the plan |
 | **G1 Rough pass v0** ✓ | Claude | `out/rough/nus-rough-v0.mp4` (the `Cut` composition, mocks and stage-1 plates) | timing, copy, order of ideas |
-| **G2 Look lock** | Seb (rigs) + Astra (look-dev) | `blender/rigs/<shot>.blend` lit by hand; Astra's hero still per shot on those rigs; the `LOOK` values frozen | one still per shot |
-| **G3 Capture** | Claude (via `RESHOOT.md`), with a prompt GPT Pro tightens | `public/footage/`: ten recordings, marks, manifest, latency | each take |
+| **G2 Look lock** | Claude (scripted highlight designs) → Astra (look-dev) → Seb | per-shot light in `DESIGNS`, with optional hand-lit rigs; Astra's hero still per shot; the `LOOK` values frozen | one still per shot |
+| **G3 Capture** | Claude (via `RESHOOT.md`), with a prompt GPT Pro tightens | `public/footage/`: twelve recordings, marks, manifest, latency | each take |
 | **G4 Picture lock** | Claude | rough pass v1: `Cut` on real footage, MOCKs gone, 2.8 ms (or the new number) settled | **timing and copy freeze here** |
 | **G5 Final** | Astra (`ASTRA.md`), with a prompt GPT Pro tightens | 4K masters in three formats plus the Resolve package (`RESOLVE.md`); `npm run check` clean | the masters |
 | **G6 Finish** | Seb + the sound designer | graded masters with the final mix | — |
@@ -70,5 +70,5 @@ G2 and G3 run side by side. G5 waits for both.
 | `GPT-PRO.md` | GPT Pro | what to write, for whom, in what shape, and what it must never do |
 | `ASTRA.md` | Astra | the final-execution brief: environment, locks, procedure, acceptance, deliverables |
 | `RESOLVE.md` | Seb, Astra | exactly what Resolve receives, and how it's laid out |
-| `../RESHOOT.md` | Claude on the Mac | the capture standard and the ten recordings |
+| `../RESHOOT.md` | Claude on the Mac | the capture standard and the twelve recordings |
 | `../PLAN.md` | everyone | the decisions |
