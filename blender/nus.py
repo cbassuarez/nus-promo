@@ -762,7 +762,7 @@ OPEN_DEG = 112
 LOOK = {"white_hdri": 0.15, "white_key": 20, "white_rims": 160, "white_cyc": 0.86, "black_hdri": 0.12, "black_rough": 0.3, "black_spec": 0.3,
         # Stage 2 (NUS_STAGE=2, the default): the product-photography stage.
         "exposure": 0.0, "screen_nits": 1.5, "screen_coat": 0.03, "set_light": 1.0, "softbox": 1.0, "bloom": 1.0, "dispersion": 0.004,
-        "metal_rough": 0.55, "bead": 1.0, "hdri_clamp": 2.0, "macro_edge": 0.12, "macro_stop": -0.7}
+        "metal_rough": 0.55, "bead": 1.0, "hdri_clamp": 2.0, "macro_edge": 0.3, "macro_stop": 0.0}
 LOOK = {k: float(os.environ.get("NUS_" + k.upper(), v)) for k, v in LOOK.items()}
 # Stage 1 is the first look (Standard view, area rims, the HDRI in every
 # reflection); stage 2 lights like a product shoot: Khronos PBR Neutral
@@ -1371,6 +1371,8 @@ def design_macro(rig):
     reflection so the key tops mirror darkness instead of the white studio,
     then one long strip grazing the home row, so each cap's front edge draws
     a line of light, and a softer bar on the aluminium in front of the keys."""
+    for ob in [o for o in bpy.data.objects if o.name.startswith("Sweep")]:
+        bpy.data.objects.remove(ob)  # it crossed straight over the keys and flooded them grey
     kb = bpy.data.objects[APPLE_KEYBOARD]
     vs = [kb.matrix_world @ v.co for v in kb.data.vertices]
     x0, x1 = min(v.x for v in vs), max(v.x for v in vs)

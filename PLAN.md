@@ -209,10 +209,10 @@ designs (`DESIGNS`):
   - a black card placed by reflection between the keys and the lid (the
     key tops mirror the lid, a few centimetres away)
   - a low strip for the caps' edges and a bar on the deck
-  - −0.7 of a stop (`macro_stop`)
+  - the old sweep removed: it crossed straight over the keys mid-shot and
+    flooded them grey, the cause of the grey keys
 
-  Open: the keycaps still read grey. That's Apple's AR keycap layer; check
-  it again on the licensed GLB before tuning further.
+  The keys read black. `macro_stop` is left at 0 as a knob.
 - **internals:** a line of light on each slab's front edge, following it as
   it rises, and a camera pulled back so the stack sits whole beside the
   caption.
