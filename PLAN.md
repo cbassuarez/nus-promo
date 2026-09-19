@@ -205,6 +205,20 @@ designs (`DESIGNS`):
 
   These replace the old sweeps.
 
+- **macro:**
+  - a black card placed by reflection between the keys and the lid (the
+    key tops mirror the lid, a few centimetres away)
+  - a low strip for the caps' edges and a bar on the deck
+  - −0.7 of a stop (`macro_stop`)
+
+  Open: the keycaps still read grey. That's Apple's AR keycap layer; check
+  it again on the licensed GLB before tuning further.
+- **internals:** a line of light on each slab's front edge, following it as
+  it rises, and a camera pulled back so the stack sits whole beside the
+  caption.
+
+`NUS_DESIGN=0` renders a shot without its design, for A/B.
+
 The studio HDRI is fill in stage 2, and its lamps are clamped
 (`hdri_clamp`) so they can't burn a disc into the glass.
 

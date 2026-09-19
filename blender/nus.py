@@ -762,7 +762,7 @@ OPEN_DEG = 112
 LOOK = {"white_hdri": 0.15, "white_key": 20, "white_rims": 160, "white_cyc": 0.86, "black_hdri": 0.12, "black_rough": 0.3, "black_spec": 0.3,
         # Stage 2 (NUS_STAGE=2, the default): the product-photography stage.
         "exposure": 0.0, "screen_nits": 1.5, "screen_coat": 0.03, "set_light": 1.0, "softbox": 1.0, "bloom": 1.0, "dispersion": 0.004,
-        "metal_rough": 0.55, "bead": 1.0, "hdri_clamp": 2.0}
+        "metal_rough": 0.55, "bead": 1.0, "hdri_clamp": 2.0, "macro_edge": 0.12, "macro_stop": -0.7}
 LOOK = {k: float(os.environ.get("NUS_" + k.upper(), v)) for k, v in LOOK.items()}
 # Stage 1 is the first look (Standard view, area rims, the HDRI in every
 # reflection); stage 2 lights like a product shoot: Khronos PBR Neutral
@@ -976,8 +976,9 @@ def shot_internals(rig):
     so.location = (0.05, 0.1, 0.9)
     aim(so, (0, 0, 0))
     cam, look = camera(50, 9.0)
-    key(cam, "location", 28, (0.40, -0.56, 0.42), "linear")
-    key(cam, "location", 44, (0.34, -0.54, 0.37), "linear")
+    back = 1.18 if STAGE >= 2 else 1.0  # stage 2: the whole stack in frame, room left for the caption
+    key(cam, "location", 28, tuple(Vector((0.40, -0.56, 0.42)) * back), "linear")
+    key(cam, "location", 44, tuple(Vector((0.34, -0.54, 0.37)) * back), "linear")
     key(look, "location", 28, (-0.11, 0.06, 0.03), "out")
     key(look, "location", 34, (-0.11, 0.06, 0.07), "out")
     key(look, "location", 42, (-0.11, 0.06, 0.04), "out")
@@ -1224,7 +1225,7 @@ def _cast(sc, origin, target, metal=True):
     return None
 
 
-def highlight(name, targets, size=(0.6, 0.1), strength=40.0, distance=1.1, along=(1, 0, 0), feather=0.45, metal=True):
+def highlight(name, targets, size=(0.6, 0.1), strength=40.0, distance=1.1, along=(1, 0, 0), feather=0.45, metal=True, kind="softbox"):
     """A softbox whose reflection lands on `targets`: {frame: world point on
     the machine}. One entry places it once; several animate it (linear), so the
     highlight holds its place — or travels, for a glint — as camera and lid
@@ -1232,7 +1233,15 @@ def highlight(name, targets, size=(0.6, 0.1), strength=40.0, distance=1.1, along
     it lights."""
     sc = bpy.context.scene
     cam = sc.camera
-    ob = softbox(f"Softbox {name}", (0, 0, 0), size, strength, look=(0, 0, 1), feather=feather)
+    if kind == "flag":
+        # Negative fill, placed the same way: the surface mirrors black. Unlike
+        # the stage's flags this one is real to diffuse light too — it takes
+        # the studio's bounce off the surface, not just its reflection.
+        ob = flag(f"Flag {name}", (0, 0, 0), size, look=(0, 0, 1))
+        ob.visible_diffuse = True
+        metal = False
+    else:
+        ob = softbox(f"Softbox {name}", (0, 0, 0), size, strength, look=(0, 0, 1), feather=feather)
     if metal:
         ob["nus_metal"] = 1  # lights the aluminium, never the glass: no stray bar across the screen
     placed = 0
@@ -1357,7 +1366,54 @@ def design_outro(rig):
         glevel.inputs[1].keyframe_insert("default_value", frame=round(beat * FPB))
 
 
-DESIGNS = {"open": design_open, "outro": design_outro}
+def design_macro(rig):
+    """The ⌘-and-K close-up: black keys, not grey. A black card placed by
+    reflection so the key tops mirror darkness instead of the white studio,
+    then one long strip grazing the home row, so each cap's front edge draws
+    a line of light, and a softer bar on the aluminium in front of the keys."""
+    kb = bpy.data.objects[APPLE_KEYBOARD]
+    vs = [kb.matrix_world @ v.co for v in kb.data.vertices]
+    x0, x1 = min(v.x for v in vs), max(v.x for v in vs)
+    y0, y1 = min(v.y for v in vs), max(v.y for v in vs)
+    top = max(v.z for v in vs)
+    k = Vector((x0 + 9.3 * (x1 - x0) / 15, y1 - 3.5 * (y1 - y0) / 6, top - 0.0002))  # K, as shot_macro aims
+    frames = [round(24 * FPB), round(24.5 * FPB), round(25 * FPB)]
+    # The key tops mirror up and back, into the open lid a few centimetres
+    # away (its glass, its lit screen): anything placed further is hidden
+    # behind it. So the card and the strips sit close, between keys and lid;
+    # the camera can't see them.
+    highlight("macro", {f: k for f in frames}, size=(0.16, 0.1), distance=0.07, metal=False, kind="flag")
+    edge = k + Vector((0, -0.0055, 0.0002))  # the cap's top, just behind its front edge
+    highlight("key edge", {f: edge for f in frames}, size=(0.22, 0.006), strength=30 * LOOK["macro_edge"], distance=0.05, along=(1, 0, 0), feather=0.3, metal=False)
+    deck = Vector((k.x, y0 - 0.012, top - 0.0015))  # the aluminium between the keys and the trackpad
+    highlight("deck bar", {f: deck for f in frames}, size=(0.25, 0.02), strength=16 * LOOK["macro_edge"], distance=0.09, along=(1, 0, 0), feather=0.45)
+    # A close-up inside a white set is lit by all of it: stop down a touch so
+    # the keys read black and the strip reads as light. (The flat ground
+    # outside the set is laid in at #fff regardless.)
+    bpy.context.scene.view_settings.exposure = LOOK["exposure"] + LOOK["macro_stop"]
+
+
+def design_internals(rig):
+    """The layers as machined slabs: a line of light on the front edge of
+    each, following it as it rises and the stack turns."""
+    names = ["Compositor", "Native UI", "Terminal", "Chromium", "Glyph atlas"]
+    beats = (28.5, 30.5, 32.5, 34.5, 36.5, 38)
+    for i, n in enumerate(names):
+        ob = bpy.data.objects.get(n)
+        if not ob:
+            continue
+
+        def front(ob=ob):
+            bpy.context.view_layer.update()
+            bb = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
+            ys = sorted(bb, key=lambda p: (ob.matrix_world.inverted() @ p).y)
+            lo = [p for p in bb if abs((ob.matrix_world.inverted() @ p).y - (ob.matrix_world.inverted() @ ys[0]).y) < 1e-6]
+            c = sum(lo, Vector()) / len(lo)  # the middle of its front face
+            return c
+        highlight(f"slab {n}", {round(b * FPB): front for b in beats}, size=(0.7, 0.035), strength=26 - 2 * i, distance=0.9, along=(1, 0, 0), feather=0.4)
+
+
+DESIGNS = {"open": design_open, "outro": design_outro, "macro": design_macro, "internals": design_internals}
 
 
 def lens():
@@ -1477,7 +1533,7 @@ def main():
     if STAGE >= 2 and SHOT and os.path.exists(rig_path()):
         for ob in [o for o in bpy.data.objects if o.name.startswith("Sweep")]:
             bpy.data.objects.remove(ob)  # a rig owns all the light, the glints included
-    elif STAGE >= 2 and shot in DESIGNS:
+    elif STAGE >= 2 and shot in DESIGNS and os.environ.get("NUS_DESIGN", "1") != "0":
         DESIGNS[shot](rig)  # after the camera and lid are keyed: highlights aim through them
     light_product_only()
     if STAGE >= 2:
