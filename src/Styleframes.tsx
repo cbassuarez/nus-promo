@@ -241,13 +241,14 @@ function LayerTags({ tags, t, objectX }: { tags: Tag[]; t: number; objectX: numb
         if (p <= 0 || t >= g.off) return null;
         const x = ox + g.x * 1920 * s;
         const y = oy + g.y * 1080 * s;
-        const right = g.text.startsWith('Chromium');
+        const right = g.text.startsWith('Chromium') || g.text.startsWith('Glyph'); // clear of the caption
+        const above = i % 2 === 0; // neighbours alternate above and below their leaders
         const lead = (46 + 10 * (i % 2)) * k;
         return (
           <div key={g.text} style={{ position: 'absolute', left: x, top: y, transform: `scale(${p})`, transformOrigin: '0 0' }}>
             <div style={{ position: 'absolute', left: -5 * k, top: -5 * k, width: 10 * k, height: 10 * k, borderRadius: '50%', background: b, border: `2px solid ${PAPER}` }} />
             <div style={{ position: 'absolute', left: right ? 0 : -lead, top: 0, width: lead, height: 2, background: PAPER, opacity: 0.8 }} />
-            <div style={{ position: 'absolute', top: -14 * k, [right ? 'left' : 'right']: lead - (right ? -2 : 2), whiteSpace: 'nowrap', background: PAPER, color: INK, border: `2px solid ${INK}`, boxShadow: `${5 * k}px ${5 * k}px 0 ${b}`, fontFamily: MONO, fontWeight: 600, fontSize: 15 * k, letterSpacing: '0.02em', padding: `${3 * k}px ${9 * k}px` }}>{g.text}</div>
+            <div style={{ position: 'absolute', top: above ? -36 * k : 6 * k, [right ? 'left' : 'right']: lead - (right ? -2 : 2) - 30 * k, whiteSpace: 'nowrap', background: PAPER, color: INK, border: `2px solid ${INK}`, boxShadow: `${5 * k}px ${5 * k}px 0 ${b}`, fontFamily: MONO, fontWeight: 600, fontSize: 18 * k, letterSpacing: '0.02em', padding: `${3 * k}px ${10 * k}px` }}>{g.text}</div>
           </div>
         );
       })}
