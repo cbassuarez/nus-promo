@@ -40,8 +40,8 @@ export function EndCard({ beat, ground = 'black' }: { beat: number; ground?: 'wh
   const size = 190;
   const settled = beat >= settleBeat(2);
   const letters = 'nus'.split('');
-  const tag1 = 'built like an IDE.';
-  const tag2 = 'fast like a *terminal*.';
+  const tag1 = "a *terminal* with an IDE's bones.";
+  const tag2 = 'nothing leaves this machine.';
   const typed = (s: string, at: number, rate = 16) => {
     const plain = s.replace(/\*/g, '');
     const n = Math.max(0, Math.min(plain.length, Math.floor((beat - at) * rate)));

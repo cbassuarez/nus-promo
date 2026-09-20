@@ -1,4 +1,4 @@
-# PLAN — the next cut
+# PLAN, the next cut
 
 The working plan for everything after the copy pass: what the film says,
 how it looks, how it's shot, and what's left. Decisions are marked
@@ -22,49 +22,57 @@ you can watch, and an account that is a file on your machine.
 
 | Pillar | Film says | Backed by | Don't say |
 |---|---|---|---|
-| Fast | **2.8 ms** key to screen | measured in the `vt-render` spike, Windows release (`nus/docs/SPIKES.md` §3) — **re-measure in the full app on the recording Mac** (RESHOOT §0) | "lightweight" (unmeasured) |
+| Fast | **2.8 ms** key to screen | measured in the `vt-render` spike, Windows release (`nus/docs/SPIKES.md` §3). **Re-measure in the full app on the recording Mac** (RESHOOT §0) | "lightweight" (unmeasured) |
 | Language-aware | completions and hovers from real language servers, at the prompt and in the editor pane | the LSP client | "AI autocomplete" |
-| Dev tools | ports board traces server → shell → page; held shells survive quit/update/crash; cut-off resumes | ports, held, cut off, journal | — |
+| Dev tools | ports board traces server → shell → page; held shells survive quit/update/crash; cut-off resumes | ports, held, cut off, journal |  |
 | IDE architecture | one native compositor (wgpu); real Chromium via CEF drawn beside your shells | the compositor | "Chromium fork" (it's CEF on a patched cef-rs; own libcef is post-v1) |
-| Agents, visible | every agent action is a block you can read, stop or take over; ASK before it acts | eyes/hands, action blocks, ASK band | any AI headline beyond what the app shows |
+| Agents, visible | every agent action is a block you can read, stop or take over; ASK before it acts; its patch applies a hunk at a time, by your hand | eyes/hands, action blocks, ASK band, `diffs.rs` | any AI headline beyond what the app shows |
+| Three machines | the laptop serves its own page to a phone on the network: what ran, what's listening, hands to allow or deny | `phone.rs`, SYNC · THE PHONE | "mobile app" (there is no app) |
 | Customizable | rules/layouts/looks in luau, every colour a token, look studio | rules.luau, look studio | "Chrome extensions" (no) |
-| Private | no account, no server, no telemetry; sync sealed with a key you copy | profile = `me.json`, sync | — |
+| Private | no account, no server, no telemetry; sync sealed with a key you copy | profile = `me.json`, sync |  |
 
-### Tagline (decided)
+### Tagline (decided 2026-09-19, after the copy pass)
 
-**Built like an IDE. Fast like a terminal.** Two typed lines on the end
-card, `terminal` in red. Kept in reserve: *Everything in one place, nothing
-leaves it.* · *A terminal with an IDE's bones.*
+**a terminal with an IDE's bones. / nothing leaves this machine.** Two
+typed lines on the end card, lowercase, `terminal` in red. It says the two
+things only nus can say, and it says them the way the app talks to you.
 
-### The cut, by beat (decided — laid on the music's existing sections)
+Kept in reserve: *one window. your shells, your pages, your agents.* ·
+*everything in one place, nothing leaves it.*
+
+Struck: *Built like an IDE. Fast like a terminal.* Correct, but it reads
+like a billboard. nus doesn't talk like that anywhere else in the product,
+so the film shouldn't either.
+
+### The cut, by beat (decided, laid on the music's existing sections)
 
 The bounce is fixed (the user's Live set is master), so the new copy lands
 on the sections the music already has. 152 bpm, 1 beat = 0.3947 s.
 
 | Beats | Music section | Section · signal | Picture | Copy |
 |---|---|---|---|---|
-| 0–8 | Open | — | **3D**, white cove, Memphis set. Lid opens by 3, screen wakes on 4 (UI 1), push-in with a dolly-zoom 4–8 into the screen | — |
-| 8–12 | The loop | Language · teal | **UI 1** fullscreen minimal shell, typing, LSP completion | *language-aware, even at the prompt.* |
-| 12–20 | Ports | Dev tools · gold | **UI 3** split with the Vite preview, edit → reload (12–16); **UI 5** ports board, *Mine*, traced port → process → shell → page (16–20) | *every server. its shell. its page.* |
-| 20–24 | Prompt | Dev tools · green | **UI 6** held shell: quit, relaunch, reattach; cut-off resume chip | *quit. update. crash. your shells keep running.* |
-| 24–28 | Palette | Fast · red | **3D macro** on ⌘ going down (24–25), cut to the **number card** (25–28) | *2.8 ms · key to screen, measured* |
-| 28–44 | Compositor | Architecture · blue | **3D internals**, the window exploding into its layers (28–38); **UI 8** editor pane, LSP hover + diagnostics (38–44) | *built like an IDE.* |
-| 44–52 | One action model | Agents · violet | **UI 2** split with a real webpage; an agent reads, scrolls, asks; action blocks stack; ASK band | *agents, in plain sight.* |
-| 52–56 | Look | Customizable · red | **UI 7** rules.luau edited live / look studio, presets snapping | *yours, all the way down.* |
-| 56–60 | Look | Home · red | **3D outro** on black, screen shows **UI 4** home + profile card | *you, on this machine.* |
-| 60–64 | Close | Private · red | lid closes (60–63), **UI 9** sync key join on screen before it shuts; glint | *no account. no server. no telemetry.* |
-| 64–76 | nus | — | end card: cuelume's one arrival at 64, icon band 64–66.5, wordmark font-cycle 66–67.75, tagline 68/69, URL line 71 | *built like an IDE. / fast like a terminal.* |
+| 0–8 | Open |  | **3D**, white cove, Memphis set. Lid opens by 3, screen wakes on 4 (**UI 0**, the prompt with the `sky` art alive behind it), push-in with a dolly-zoom 4–8 into the screen |  |
+| 8–12 | The loop | Language · teal | **UI 1** fullscreen minimal shell, typing, LSP completion | *the prompt has a language server.* |
+| 12–20 | Ports | Dev tools · gold | **UI 3** split with the Vite preview and FILES open, edit → reload (12–16); **UI 5** ports board, *Mine*, traced port → process → shell → page (16–20) | *every server. its shell. its page.* |
+| 20–24 | Prompt | Dev tools · green | **UI 6** held shell: quit, relaunch, reattach; then **UI 12** the prompt's WHILE YOU WERE AWAY rows on the way back in | *the shells keep going.* |
+| 24–28 | Palette | Fast · red | **3D macro** on ⌘ going down (24–25), cut to the **number card** (25–28) | *2.8 ms. key to screen. we measured it.* |
+| 28–44 | Compositor | Architecture · blue | **3D internals**, the window coming apart into its planes (28–38); **UI 8** editor pane, LSP hover + diagnostics (38–44) | *it's an IDE underneath.* |
+| 44–52 | One action model | Agents · violet | **UI 2** split with a real webpage; the agent reads, scrolls, asks; the ASK band; then **UI 13** its patch in the shell, STAGE on one hunk | *watch the agent work.* |
+| 52–56 | Look | Customizable · red | **UI 7** the art picker, a Luau file edited and saved, the prompt redrawing behind the line | *every pixel is a file.* |
+| 56–60 | Look | Home · red | **3D outro** on black, screen shows **UI 4** home + profile card | *your account is a file.* |
+| 60–64 | Close | Private · red | lid closes (60–63); **UI 14** the phone beside it, the page this window serves, a thumb on ALLOW; glint | *no account. no server. nothing sent.* |
+| 64–76 | nus |  | end card: cuelume's one arrival at 64, icon band 64–66.5, wordmark font-cycle 66–67.75, tagline 68/69, URL line 71 | *a terminal with an IDE's bones. / nothing leaves this machine.* |
 
-Code changes this implies (not done yet — see the checklist): Blender
+Code changes this implies (not done yet, see the checklist): Blender
 `RANGES` → `internals (28, 38)`, `outro (56, 64)`; `pattern.mjs` section
 *names* only (the hits stay, they're the user's); `Film.tsx` rebuilt from
 the styleframe components.
 
 ## 2 · Type and hierarchy (decided)
 
-- **One family for copy: IBM Plex Mono** — 600 headlines, 400 subs, 500
+- **One family for copy: IBM Plex Mono.** 600 headlines, 400 subs, 500
   kickers. Terminal-true, and it doesn't fight the UI in frame.
-- **The wordmark stays Newsreader Italic** — it's the app's wordmark. It
+- **The wordmark stays Newsreader Italic.** It's the app's wordmark. It
   arrives as a **font cycle**: each letter flips through faces on the
   16ths (Plex SemiBold → Silkscreen → Plex Italic → Bungee → Rubik Mono
   One), staggered a 16th per letter, and settles on Newsreader left to
@@ -84,7 +92,7 @@ the styleframe components.
 
 ## 3 · The Memphis kit (decided)
 
-Memphis, made of what nus already draws — so it reads as the app's own
+Memphis, made of what nus already draws, so it reads as the app's own
 voice, not a trend. (`src/design/Memphis.tsx`, the *kit* styleframe)
 
 | Element | From the app | Rule |
@@ -92,21 +100,21 @@ voice, not a trend. (`src/design/Memphis.tsx`, the *kit* styleframe)
 | Squiggle | the icon's orbit band, opened out, tapered | one per frame, max |
 | Stripes | hazard tape (local-site pages) | framing corners only |
 | Dots | halftone / stipple textures | bleed off an edge |
-| Solids | lamps, the Space square — 2 px ink outline + 8×8 hard shadow | behind cards, never over UI |
+| Solids | lamps, the Space square: 2 px ink outline + 8×8 hard shadow | behind cards, never over UI |
 | Stickers | Phosphor icons in a white disc | one per frame, near the card's corner |
 | Zigzag | the stitch texture | the caption kicker's rule |
 
 - **One signal per section** (table above), plus ink and paper. Shapes
-  **frame, never cover** — nothing sits on UI or type.
+  **frame, never cover**. Nothing sits on UI or type.
 - **Shapes pop on the beat** with a little overshoot (the only thing that
   may); type never does. Cards carry the app's hard shadow: ink on white,
   the section's signal on black.
-- **In 3D** the kit becomes painted objects on the cove — cone, arch,
-  sphere, hoop, tape block, squiggle tube — lit by a hard sun so they cast
+- **In 3D** the kit becomes painted objects on the cove (cone, arch,
+  sphere, hoop, tape block, squiggle tube) lit by a hard sun so they cast
   the kit's hard shadows, with Freestyle drawing the 2 px ink outline on
   the Memphis collection only (`blender/mocks.py`, *memphis*).
 
-## 4 · 3D — shots, light, lenses
+## 4 · 3D: shots, light, lenses
 
 Sets are real cycloramas lit by Poly Haven HDRIs (camera rays see flat
 #fff / #000); Cycles light linking keeps rims and sweeps on the product.
@@ -116,8 +124,8 @@ CGTrader GLB replaces it before the final render.
 | Shot | Beats | Set | Camera (Photographer) | Light (Light Wrangler rig) | Mock |
 |---|---|---|---|---|---|
 | Open | 0–8 | white cove + Memphis props | 40 mm f/5.6 → dolly-zoom 35↔85 on the push-in | hard side sun (kit shadows), HDRI fill, rims | *memphis*, *dolly-35/85* |
-| First light (option for 0–2) | 0–2 | black | 35 mm f/4 | one spot through a blind in haze — shafts and bars across the shut lid | *first-light* |
-| Floating UI (option inside 8–20) | — | white cove | 50 mm f/2.4, focus on the middle card | soft key | *cards* |
+| First light (option for 0–2) | 0–2 | black | 35 mm f/4 | one spot through a blind in haze, shafts and bars across the shut lid | *first-light* |
+| Floating UI (option inside 8–20) |  | white cove | 50 mm f/2.4, focus on the middle card | soft key | *cards* |
 | Macro | 24–25 | white cove | 85 mm f/2.8, focus on ⌘ | key 12, rims 45 | (existing) |
 | Internals | 28–38 | black | 50 mm f/9 | layer rims, haze | (existing) |
 | Outro | 56–64 | black glossy | 50 mm f/4 | a moving key: strip sweeps on 56/60, the glint on the shut lid | *glint* |
@@ -133,7 +141,7 @@ everything else.
    dolly zoom). Put the lights in a collection named `Rig`, save as
    `blender/rigs/open.blend`.
 3. The script appends `Rig` from that file when it exists, and reads the
-   camera's Photographer settings from it (to be built — checklist).
+   camera's Photographer settings from it (to be built, see the checklist).
 
 Found in the probe (2026-09-18, Blender 4.5.3):
 - Both add-ons load headless as extensions (`extensions/user_default/`),
@@ -238,18 +246,28 @@ at G2.
 
 ## 5 · The Mac reshoot (UI shots)
 
-Recorded on the Mac with nus's own `NUS_SHOT` recorder — this also proves
+Recorded on the Mac with nus's own `NUS_SHOT` recorder, which also proves
 macOS parity. Full prompt: `RESHOOT.md`.
 
-1. **Fullscreen minimal shell** — typing, LSP completion, cargo lamps
-2. **Split with a real webpage** — an agent reads/scrolls/asks; action blocks; ASK band
-3. **Split with a local Vite preview** — edit in the editor pane → the preview reloads
-4. **Home + profile card** — the welcome page, the card rising from the footer avatar
-5. **Ports board** — *Mine*, with marks for the trace
-6. **Held shell** — quit, relaunch, reattach; the cut-off resume chip
-7. **Customization** — rules.luau edited live; look studio presets
-8. **Editor pane** — LSP hover + diagnostics
-9. **Sync** — joining a second device with a key
+0. **The prompt under an art** (`sky`), for the screen as the lid opens
+1. **Fullscreen minimal shell**: typing, LSP completion, cargo lamps
+2. **Split with a real webpage**: the agent reads, scrolls, asks; action blocks; ASK band
+3. **Split with a local Vite preview**: edit in the editor pane, the preview reloads, FILES open beside it
+4. **Home + profile card**: the welcome page, the card rising from the footer avatar
+5. **Ports board**: *Mine*, with marks for the trace
+6. **Held shell**: quit, relaunch, reattach; the cut-off resume chip
+7. **The art picker**: an art chosen, its Luau file edited and saved, the prompt redrawing
+8. **Editor pane**: LSP hover + diagnostics
+9. **Sync**: joining a second device with a key
+10. **FILES**: the window bound to a folder, the tree, a file previewed on one click
+11. **A shell in a scroll**: this is where `layers` and `atlas` come from
+12. **While you were away**: the prompt's news rows after a relaunch
+13. **A hunk staged**: the agent's patch in the shell, STAGE on one `@@` line
+14. **The phone**: the page this window serves, and a thumb on ALLOW
+
+Shots 0 and 10 to 14 are new, from the surfaces built on 2026-09-19. The
+audit that put them in the cut is in the checklist below; what each one
+replaces is in the beat table.
 
 ## 6 · Formats (decided)
 
@@ -283,7 +301,7 @@ npm run render                                   # footage → score → picture
 ## Open questions
 
 - **Recorder**: nus's `NUS_SHOT` recorder (exact frames, virtual clock)
-  vs. Playwright-style screen capture. Recommendation: `NUS_SHOT` — it's
+  vs. Playwright-style screen capture. Recommendation: `NUS_SHOT`. It's
   frame-exact and it's part of nus; Playwright can't drive a native
   window.
 - **The licensed GLB**: which CGTrader model, and its node names (the
@@ -311,6 +329,12 @@ npm run render                                   # footage → score → picture
 - [x] The roundtable: `handoff/`, with RESHOOT.md folding in the capture standard
 - [x] `tools/check.py` (`npm run check`, `npm run check:final`), the Resolve markers EDL, and EXR plates (`--exr 1`)
 - [ ] G2: Seb lights the rigs; Astra shows a look-dev still per shot
+- [x] The recorder, in nus itself: one clock (`clock.rs`), `record`, `at`,
+      `type`, `key`, `await-paint`, `await-lsp`, `settle`, `marks`,
+      `layers`, `atlas_png`, and `NUS_SHOT_SIZE` for a 3200×2000 capture.
+      Two takes of the same script came back 59 of 60 frames identical
+- [x] The new surfaces audited into the cut (2026-09-19): the phone, while
+      you were away, a hunk staged, FILES, the arts
 - [ ] G3: the Mac reshoot (Claude drives nus, via `RESHOOT.md`, after GPT Pro tightens it) → `public/footage/`
 - [ ] G4 rough pass v1:
   - the footage wired into `Cut`'s sections

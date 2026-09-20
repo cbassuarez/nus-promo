@@ -166,7 +166,7 @@ export function ProfileCard({ size, accent, name = 'seb', day = 1 }: { size: num
   );
 }
 
-// The welcome page (welcome.rs): a ruled document you can act from — chord,
+// The welcome page (welcome.rs): a ruled document you can act from: chord,
 // title, what it does, and TRY where it makes sense. Profile first.
 export function Welcome({ size, accent }: { size: number; accent: string }) {
   const rows: [string, string, string, boolean][] = [
@@ -174,7 +174,7 @@ export function Welcome({ size, accent }: { size: number; accent: string }) {
     ['⌘⇧P', 'palette', 'every command, by name', true],
     ['⌘D', 'split', 'a shell and a page, side by side', true],
     ['⌘⇧O', 'ports', 'every server, its shell, its page', true],
-    ['⌘,', 'look studio', 'fonts, ramps, signals — live', true],
+    ['⌘,', 'look studio', 'fonts, ramps, signals, live', true],
     ['⌘⇧H', 'hints', 'label every link and act on it', false],
   ];
   return (

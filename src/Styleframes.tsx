@@ -85,7 +85,7 @@ export function Agents({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
       <Pop beat={t} at={f + 0.5} x={c.x - 40 * k} y={c.y + c.h - 70 * k} rotate={-10}>
         <Sticker icon="cursor-click" size={96 * k} />
       </Pop>
-      {captionFor('agents', { kicker: 'Agents · 05', headline: 'agents, in *plain sight*.', sub: 'every click is a block you can read, stop or take over.' }, wide, W, m, col, { t, f, u })}
+      {captionFor('agents', { kicker: 'Agents · 05', headline: 'watch the agent\n*work*.', sub: 'every move is a block you can read, stop or take over.' }, wide, W, m, col, { t, f, u })}
       <Pop beat={t} at={f + 0.5} x={m} y={wide ? H * 0.12 + 420 * k : c.y + c.h + 90 * k} rotate={-2}>
         <Squiggle width={(wide ? 420 : 380) * k} height={40 * k} colour={v} weight={14 * k} />
       </Pop>
@@ -167,7 +167,7 @@ export function Language({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) 
         <Solid shape="half" size={150 * k} colour={sig} />
       </Pop>
       <div style={{ position: 'absolute', right: m, bottom: wide ? m : H * 0.08, background: WHITE, border: `2px solid ${INK}`, boxShadow: `${8 * k}px ${8 * k}px 0 ${sig}`, padding: `${26 * k}px ${34 * k}px`, width: wide ? 880 * k : W - 2 * m, boxSizing: 'border-box' }}>
-        <Caption beat={t} from={f + 0.25} until={u} signal="teal" ground="white" kicker="Language · 01" headline={'language-aware,\neven *at the prompt*.'} sub="the same language servers as your editor." style={{ position: 'relative', left: 0, top: 0, width: '100%' }} />
+        <Caption beat={t} from={f + 0.25} until={u} signal="teal" ground="white" kicker="Language · 01" headline={'the prompt has a\n*language server*.'} sub="the same servers your editor uses, on the line you are typing." style={{ position: 'relative', left: 0, top: 0, width: '100%' }} />
       </div>
     </Ground>
   );
@@ -190,7 +190,7 @@ export function Held({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
           [['test held::reattaches_after_quit ... ', T.fg], ['ok', T.green]],
           [['test result: ', T.fg], ['ok', T.green], ['. 212 passed; 0 failed', T.fg]],
           [[' ']],
-          [['── nus quit · 14:02 ── relaunched · 14:02 ── reattached ──', T.dim]],
+          [['nus quit · 14:02 · relaunched · 14:02 · reattached', T.dim]],
           [['[Running cargo test]', T.dim]],
           [['test result: ', T.fg], ['ok', T.green], ['. 212 passed; 0 failed', T.fg]],
         ]}
@@ -201,7 +201,7 @@ export function Held({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
         <Stripes width={260 * k} height={44 * k} colour={g} />
       </Pop>
       <div style={{ position: 'absolute', right: m, bottom: wide ? m : H * 0.08, background: WHITE, border: `2px solid ${INK}`, boxShadow: `${8 * k}px ${8 * k}px 0 ${g}`, padding: `${26 * k}px ${34 * k}px`, width: wide ? 860 * k : W - 2 * m, boxSizing: 'border-box' }}>
-        <Caption beat={t} from={f + 0.25} until={u} signal="green" ground="white" kicker="Dev tools · 03" headline={'quit. update. crash.\nyour shells *keep running*.'} style={{ position: 'relative', left: 0, top: 0, width: '100%' }} />
+        <Caption beat={t} from={f + 0.25} until={u} signal="green" ground="white" kicker="Dev tools · 03" headline={'the shells\n*keep going*.'} sub="quit it, update it, crash it. they reattach when you come back." style={{ position: 'relative', left: 0, top: 0, width: '100%' }} />
       </div>
     </Ground>
   );
@@ -213,7 +213,7 @@ export function IDE({ t = BEAT, f = 0, u = Infinity, plate, tags = [] }: Timing 
   return (
     <Ground section="ide">
       <Img src={plate ?? staticFile('lookdev/internals-0960.png')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '66% 50%' }} />
-      {captionFor('ide', { kicker: 'Architecture · 04', headline: 'built like an *IDE*.', sub: 'one native compositor. real chromium, drawn beside your shells.' }, wide, W, m, col, { t, f, u })}
+      {captionFor('ide', { kicker: 'Architecture · 04', headline: "it's an *IDE*\nunderneath.", sub: 'one native compositor. real chromium, drawn beside your shells.' }, wide, W, m, col, { t, f, u })}
       <Pop beat={t} at={f + 0.5} x={m} y={(wide ? H * 0.12 : H * 0.08) + (wide ? 390 : 480) * k}>
         <Squiggle width={330 * k} height={36 * k} colour={b} weight={13 * k} />
       </Pop>
@@ -286,7 +286,7 @@ export function Yours({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
           ))}
         </div>
       </div>
-      {captionFor('yours', { kicker: 'Customizable · 06', headline: 'yours, *all the way down*.', sub: 'rules, layouts and looks in luau. every colour a token.' }, wide, W, m, col, { t, f, u })}
+      {captionFor('yours', { kicker: 'Customizable · 06', headline: 'every pixel\nis a *file*.', sub: 'one luau file each. save it and it redraws.' }, wide, W, m, col, { t, f, u })}
       {(['red', 'blue', 'gold', 'green', 'violet', 'teal'] as const).map((s, i) => (
         <Pop key={s} beat={t} at={f + 0.5} x={m + i * 58 * k} y={wide ? H - m - 60 * k : c.y - 110 * k}>
           <Solid shape={i % 2 ? 'circle' : 'square'} size={40 * k} colour={SIGNAL[s]} />
@@ -302,7 +302,7 @@ export function Private({ t = BEAT, f = 0, u = Infinity, plate, home }: Timing =
   return (
     <Ground section="private">
       <Img src={plate ?? staticFile('lookdev/apple-outro-1240.png')} style={wide ? { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '62% 50%' } : { position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: '58%', objectFit: 'cover', objectPosition: '66% 50%' }} />
-      {captionFor('private', home ? { kicker: 'Home · 07', headline: 'you, *on this machine*.', sub: 'your profile is a file. no server, nothing counted, nothing sent.' } : { kicker: 'Private · 08', headline: 'no account.\nno server.\nno *telemetry*.', sub: 'a file in a folder is the whole account. sync is sealed with a key you copy.' }, wide, W, m, col, { t, f, u })}
+      {captionFor('private', home ? { kicker: 'Home · 07', headline: 'your account\nis a *file*.', sub: 'a folder on this machine. nothing counted, nothing sent.' } : { kicker: 'Private · 08', headline: 'no account.\nno server.\nnothing *sent*.', sub: 'a file in a folder is the whole account. sync is sealed with a key you copy.' }, wide, W, m, col, { t, f, u })}
       <Pop beat={t} at={f + 0.5} x={m} y={wide ? H - 150 * k : H * 0.4} rotate={-3}>
         <Stripes width={280 * k} height={44 * k} colour={r} />
       </Pop>
@@ -328,7 +328,7 @@ export function Home({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}) {
       <Pop beat={t} at={f + 0.5} x={c.x - 50 * k} y={c.y - 50 * k} rotate={-10}>
         <Sticker icon="house" size={100 * k} />
       </Pop>
-      {captionFor('yours', { kicker: 'Home · 07', headline: 'you, *on this machine*.', sub: 'your profile is a file. no server, nothing counted, nothing sent.' }, wide, W, m, col, { t, f, u })}
+      {captionFor('yours', { kicker: 'Home · 07', headline: 'your account\nis a *file*.', sub: 'a folder on this machine. nothing counted, nothing sent.' }, wide, W, m, col, { t, f, u })}
     </Ground>
   );
 }
@@ -341,7 +341,7 @@ export function NumberCard({ t = BEAT, f = 0, u = Infinity, plate }: Timing = {}
         <Dots width={560 * k} height={400 * k} colour={SIGNAL.red} pitch={22 * k} from="top-left" />
       </Pop>
       <div style={{ position: 'absolute', left: m, top: wide ? H * 0.22 : H * 0.3, fontFamily: MONO, color: INK }}>
-        <div style={{ fontWeight: 500, fontSize: 18 * k * (wide ? 1 : 1.3), letterSpacing: '0.08em', color: DIM_ON_WHITE, marginBottom: 20 * k }}>Key to screen · measured</div>
+        <div style={{ fontWeight: 500, fontSize: 18 * k * (wide ? 1 : 1.3), letterSpacing: '0.08em', color: DIM_ON_WHITE, marginBottom: 20 * k }}>key to screen. we measured it.</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 20 * k }}>
           <span style={{ fontWeight: 600, fontSize: 280 * k * (wide ? 1 : 1.25), letterSpacing: '-0.04em', lineHeight: 0.9 }}>2.8</span>
           <span style={{ fontSize: 110 * k * (wide ? 1 : 1.25), color: DIM_ON_WHITE }}>ms</span>
@@ -374,7 +374,7 @@ export function Editor({ t = BEAT, f = 0, u = Infinity }: Timing = {}) {
       <Pop beat={t} at={f + 0.5} x={c.x - 40 * k} y={c.y + c.h - 80 * k} rotate={-8}>
         <Sticker icon="code" size={96 * k} />
       </Pop>
-      {captionFor('editor', { kicker: 'Architecture · 04', headline: 'an editor, with *its language server*.', sub: 'hover, diagnostics, go to definition — in a pane beside the shell.' }, wide, W, m, col, { t, f, u })}
+      {captionFor('editor', { kicker: 'Architecture · 04', headline: 'an editor, with *its language server*.', sub: 'hover, diagnostics, go to definition, in a pane beside the shell.' }, wide, W, m, col, { t, f, u })}
     </Ground>
   );
 }

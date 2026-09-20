@@ -1,4 +1,4 @@
-# Reshoot — a prompt for Claude Code on the Mac
+# Reshoot, a prompt for Claude Code on the Mac
 
 Paste everything below the line into Claude Code, run from the `nus`
 checkout on the Mac that records. It produces every piece of software
@@ -92,62 +92,52 @@ The viewer never waits for the operator and never wonders where to look.
    median and p95, the display's refresh rate, and exactly what was
    measured. The film uses whatever this says.
 
-## 1 · Extend the shot system
+## 1 · The recorder
 
-Read `spikes/composite/src/shot.rs`. `NUS_SHOT=<script>` already runs a step
-list on the app's own event loop and writes PNGs from an offscreen render.
-Extend it into a recorder. Commit the extensions and every script (under
-`docs/promo/`); they're part of nus.
+Built on 2026-09-19 and in the nus tree (`spikes/composite/src/clock.rs`,
+`shot.rs`). `NUS_SHOT=<script>` runs a step list on the app's own event
+loop and writes PNGs from an offscreen render. What it does now:
 
-1. **Scale.** `NUS_SHOT_SCALE=2` renders the offscreen capture at 2× the
-   logical size, whatever the display's scale is. Every shot's logical
-   window is **1600×1000**, so every capture is **3200×2000**.
-2. **A fixed clock.** `record <name> <seconds>` starts a recording. From
-   then on, every time source the UI animates on (easing, caret springs,
-   scroll curves, bands, the palette, the profile card's rise, chips'
-   fades) reads a virtual clock that advances **exactly 1/60 s per
-   frame**. Each frame: advance the clock, run the due steps, update, draw
-   offscreen, and write `<NUS_SHOT_OUT>/<name>/f00000.png`… Route the
-   app's `Instant::now()` reads through one clock shim; don't fork the
-   animation code.
-3. **Timed steps.** Inside a recording, `at <seconds> <step>` runs a step
-   at that clip time. Add:
-   - `type <text> <chars-per-second>`, which types into whatever has
-     focus (shell, editor, palette, the prompt) one character at a time on
-     the virtual clock
-   - `key <chord>` (`cmd+s`, `enter`, `tab`, `down`, `cmd+q`…), sent
-     through the app's own key handling
-   - `await-paint`: the virtual clock **stops** (no frames are written)
-     until the focused page's CEF texture next changes, then carries on.
-     This is how a page load or an HMR reload lands on an exact frame
-     even though Chromium isn't on the clock.
-   - `await-lsp`: the same, until the pending language-server answer
-     (completion, hover, diagnostics) arrives.
+- **One clock.** Everything that animates reads `clock::now()`. In a
+  recording that clock advances exactly 1/60 s per written frame, however
+  long the machine took to draw it, so a take lands on the same frames
+  every time. Real time is still real where it should be: page-load
+  timings, network deadlines, the event loop.
+- **`record <name> <seconds>`** writes `<NUS_SHOT_OUT>/<name>/f00000.png`
+  and on from there, at 60 fps.
+- **`at <seconds> <step>`** lines follow the `record` line and are its
+  schedule. Every other verb works inside a recording.
+- **`type <text> <cps>`** types into whatever has the focus, a character
+  at a time, on the clock. **`key <chord>`** sends a chord (`cmd+s`,
+  `down`, `tab`, `enter`, `esc`) through the app's own key handling, not
+  synthetic OS input, so a scripted key runs the code a finger runs.
+- **`await-paint`** and **`await-lsp`** stop the clock. No frames are
+  written and nothing animates until the page paints or the language
+  server answers, which is how a page load or an HMR reload lands on an
+  exact frame although Chromium is not on this clock. A hold that never
+  comes gives up after 10 s and says so rather than hanging.
+- **`settle`** holds the script until six frames in a row hash the same,
+  so a take starts from the same still frame every time.
+- **`NUS_SHOT_SIZE=1600x1000`** fixes the window at creation. On this Mac
+  that captures at **3200×2000**, which is the standard.
+- **`marks <file.json> all`** (or `key=label` pairs) writes the on-screen
+  rectangles of named elements in logical px, read from the accessibility
+  tree, so an overlay the film draws sits exactly where nus drew the thing.
+- **`layers <dir>`** writes `compositor.png`, `native-ui.png` (the chrome
+  with the panes cut out), `terminal.png`, `chromium.png` and
+  `marks.json`. One frame masked four ways, not four renders, so the
+  planes line up to the pixel.
+- **`atlas_png <file>`** dumps nus-render's glyph atlas as it sits on the
+  GPU, 2048 square.
+- **`phone on` / `phonetab`** turn SYNC · THE PHONE on and open the page
+  it serves. **`hunk stage|revert|unstage|apply <n>`** clicks a chip on a
+  diff's `@@` line, at the chip's own rectangle.
 
-   Existing verbs (`palette`, `board`, `theme`, `url`, `hands`, `home`…)
-   must work under `at`.
-4. **Verbs this film needs:** `me` (the profile card, as `Act::Me`),
-   `hand <kind> <args>` (issue a hands request as `claude` would through
-   `nus mcp`, e.g. `hand read`, `hand scroll 0 600`,
-   `hand click "Issues"`, so the band, the chips and the log are the real
-   ones, driven deterministically), `editor <path>` (open a file in the
-   editor pane), `studio` (the look studio), and `fullscreen hidden` (the
-   window fullscreen, chrome hidden: the minimal mode).
-5. **Marks.** `mark <file.json> <key>=<element> …` writes the on-screen
-   rectangles of named UI elements as `{ "key": [x, y, w, h] }`, in
-   logical px of the 1600×1000 window. Resolve elements from the AccessKit
-   tree (one node per hit target). The film draws overlays from these, so
-   they must be exact.
-6. **Layers.** `layers <dir>` writes, from one frame:
-   - `compositor.png`, the final composite
-   - `native-ui.png`, the chrome only, transparent elsewhere
-   - `terminal.png`, the terminal pane's texture in place, transparent elsewhere
-   - `chromium.png`, the CEF texture in place, transparent elsewhere
-   - `marks.json`, with `header`, `sidebar`, `terminal` and `chromium` as `[x0, y0, x1, y1]`
+Checked: two takes of the same script came back 59 of 60 frames
+byte-identical, every step on its frame, at 3200×2000.
 
-   All at 2×.
-7. **Atlas.** `atlas <file.png>` dumps nus-render's glyph atlas as it sits
-   on the GPU.
+Still to build, if a shot needs it: a second window under `NUS_SHOT2` in a
+recording, and pointer paths to `pointer.json`.
 
 Encode each recording with
 `ffmpeg -framerate 60 -i f%05d.png -c:v libx264 -preset slow -crf 10 -pix_fmt yuv420p <name>.mp4`
@@ -201,8 +191,8 @@ intended frames; where they're marked MOCK, your footage replaces them.
 
 ### 1 · `shell-min`: time 0 = beat 4 · record 4.2 s
 The laptop's screen wakes on this (0–1.58 s, seen in 3D). The camera
-pushes in and it's the full frame 8–12. Film line: *language-aware, even
-at the prompt.*
+pushes in and it's the full frame 8–12. Film line: *even the prompt has a
+language server.*
 - before `record`: `fullscreen hidden`, one shell `web` in
   `~/dev/acme-web`, a few lines of `git log --oneline -3` above the prompt
 - 1.579 (beat 8): `type` a prefix the prompt's language server completes
@@ -213,7 +203,7 @@ at the prompt.*
 - hold to 4.2
 
 ### 2 · `agent-page`: time 0 = beat 44 · record 4.2 s, plus marks
-Film line: *agents, in plain sight.*
+Film line: *the agent works where you can watch it.*
 - before `record`: a split, a shell running `claude` on the left, and on
   the right `https://github.com/cbassuarez/nus` (a real page, public, and
   ours), loaded and settled
@@ -243,7 +233,7 @@ Film line: *every server. its shell. its page.*
   the film traces port → process → shell → page, one a beat
 
 ### 6 · `held-a` + `held-b`: time 0 = beats 20 and 22 · record 1.8 s each
-Film line: *quit. update. crash. your shells keep running.* Two
+Film line: *quit it. update it. crash it. / the shells keep going.* Two
 recordings, because the app really quits in between.
 - **held-a**: `cargo watch -x test` running in a held shell, a test pass
   in progress; `key cmd+q` at 0.789 (the quit is the clip's last frame)
@@ -252,19 +242,23 @@ recordings, because the app really quits in between.
   command a restart *did* kill, showing the cut-off seam and its resume
   chip. Hold to 1.8.
 
-### 7 · `studio-live`: time 0 = beat 52 · record 2.6 s
-Film line: *yours, all the way down.*
-- before `record`: the editor pane on `rules.luau` on the left, the look
-  studio on the right
-- 0.000, 0.395, 0.789, 1.184: a preset per beat (Broadsheet → Midnight →
-  Ledger → Darkroom, or whichever stock presets exist), the whole window
-  re-skinning on each
-- 1.579: `type` a one-line rule change into `rules.luau`, `key cmd+s`
-  at 1.974; the rule takes effect (a new tab's signal, say) by 2.2
+### 7 · `art-live`: time 0 = beat 52 · record 2.6 s
+Film line: *every pixel of it is a file you can edit.*
+An art behind the prompt is one Luau file. That is the whole argument for
+this beat, and it plays better than a settings page.
+- before `record`: the prompt on the left with `homelook art memphis`, the
+  editor pane on that art's Luau file on the right, `settle`
+- 0.000, 0.395: `homelook art sky`, then `homelook art pond`, a beat each,
+  the prompt redrawing under the line
+- 0.789: `homelook art memphis` again, back where it started
+- 1.184: `type` a changed number into the Luau (a colour, a count), `key
+  cmd+s` at 1.579; the prompt redraws on save, by 1.8
 - hold to 2.6
+- if a re-skin still earns its place, `studio` and one preset snap belong
+  here too; otherwise it goes to the b-roll
 
 ### 8 · `editor-lsp`: time 0 = beat 38 · record 3.4 s
-Film line (the second half of *built like an IDE.*)
+Film line (the second half of *it's an IDE underneath.*)
 - before `record`: the editor pane on the seeded Rust file,
   rust-analyzer warm, the type error already underlined
 - 0.395: the pointer moves onto the error, and the diagnostic card shows
@@ -273,16 +267,16 @@ Film line (the second half of *built like an IDE.*)
 - hold to 3.4
 
 ### 4 · `home-profile`: time 0 = beat 56 · record 2.6 s
-On the 3D laptop's screen as the outro starts. Film line: *you, on this
-machine.*
+On the 3D laptop's screen as the outro starts. Film line: *your account is a
+file on your machine.*
 - before `record`: `home` (the prompt, centred, nothing else)
 - 0.395: `me`, and the profile card rises from the footer's avatar: face,
   name, the DAY badge, NAME · FACE · DEVICE · SYNC · PRIVATE, MORE / CLOSE
 - hold to 2.6
 
 ### 9 · `sync-join`: time 0 = beat 60 · record 2.6 s
-On the laptop as the lid closes. Film line: *no account. no server. no
-telemetry.*
+On the laptop as the lid closes, as the b-side to the phone. Film line:
+*no account. no server. nothing phones home.*
 - before `record`: SETTINGS · SYNC
 - 0.000: paste the demo key; 0.395: join; the device list shows **2
   devices** once the exchange reports (`await-paint`, or its own await if
@@ -303,6 +297,43 @@ For the website: a single interaction whose end state is its start state.
 - The palette opens (`palette go`), `type git lo 10`, the selection moves
   twice, then it closes (`close`).
 - The last frame equals the first.
+
+### 12 · `news-away`: time 0 = beat 22 · record 2.2 s
+The second half of the held-shell beat, and the reason the beat matters:
+the shells kept going, and nus tells you what they did.
+- before `record`: a relaunch with work behind it (a test run that failed,
+  one still running, a hands request waiting), `home`, `settle`
+- 0.000: `news <unix seconds>`, the rows coming up over the prompt: what
+  failed, what ran long, what still runs, who is asking for hands
+- 0.789 (beat 24): the selection moves down one row
+- hold to 2.2
+- `marks news-away.marks.json all`
+
+### 13 · `diff-hunk`: time 0 = beat 48 · record 2.6 s, plus marks
+The other half of *the agent works where you can watch it*. It is not only
+that you see the patch, it is that you decide, one hunk at a time.
+- before `record`: a shell in `~/dev/acme-web`, the agent's patch printed
+  by `git --no-pager diff` (two hunks, one file, plausible), shell
+  integration on so the output is a block, `settle`
+- 0.395: the pointer onto the first `@@` line, its chips lit
+- 0.789 (beat 50): `hunk stage 0`
+- 1.184: the toast lands, the output beneath it unchanged
+- hold to 2.6
+- `marks diff-hunk.marks.json all`
+
+### 14 · `phone-allow`: no beat (cut against 60–64) · record 3.0 s
+The shot the film did not have. Two machines in one frame, and the laptop
+is the one serving.
+- before `record`: `phone on`, a hands request waiting on the laptop, the
+  phone (a real one, in frame) on the served address
+- the laptop side is the recording: the ASK band waiting, answered from
+  the phone at 1.184, the band resolving on that frame
+- the phone side is filmed with the 3D camera in the same light, or shot
+  against the same black and comped
+- hold to 3.0
+- `marks phone-allow.marks.json all`
+- nothing personal on the phone's screen, and the address and its token
+  never legible in frame
 
 ### Stills and layers
 - Every still in `docs/media/` again, at 2× (3200×2000), same names, in
